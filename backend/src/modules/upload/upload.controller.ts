@@ -7,17 +7,34 @@ import { fullPaperReviewWorkflow } from '../../engine/workflows/full_paper_revie
 import { activityService } from '../../engine/activity/activity.service';
 import { AgentContribution } from '../../engine/blackboard/blackboard.types';
 import { setReviewMaxConcurrency } from '../system/system.state';
+import { activityText } from '../../lib/activity-i18n';
+import { ProjectRerunError, restartProjectAnalysis } from '../project/project-rerun.service';
 
 const prisma = new PrismaClient();
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
 async function createDemoProject() {
+  const demoSourceText = [
+    'Abstract / Preliminaries',
+    '本文研究如何通过透明化多智能体协同工作流提升 AI 辅助论文修改系统的可用性，使用户能够直观看到任务分发、专家发现以及总控汇总过程，从而增强信任感与可操作性。',
+    '',
+    'Chapter 1 Introduction',
+    '绪论部分介绍了透明化 AI 修改系统的研究动机，但在研究空白和评估边界尚未交代清楚前，过早强调了系统贡献，导致论证顺序略显突兀。',
+    '',
+    'Chapter 2 Methodology',
+    '方法章节描述了结构、逻辑、文献、写作四类智能体以及总控编辑的协同机制，但部分步骤尚未与后续评估指标形成严格映射。',
+    '',
+    'Chapter 3 Evaluation and Results',
+    '实验与结果章节报告了用户信任度和修改效率的提升，但日志透明度、用户行为变化与结果指标之间的证据链仍不够严密。',
+  ].join('\n\n');
+
   const project = await prisma.paperProject.create({
     data: {
-      title: '演示论文：面向论文改进的透明化多智能体协同系统',
-      major: '计算机科学与技术',
+      title: 'Demo Paper: Transparent Multi-Agent Paper Improvement System',
+      major: 'Computer Science and Technology',
       stage: 'draft',
+      sourceText: demoSourceText,
     },
   });
 
@@ -75,15 +92,15 @@ async function createDemoProject() {
     major: project.major || 'Unknown',
   });
 
-  await activityService.updateParseStage(task.id, 'parse', 'completed', '演示文本已从内置中文示例论文中解析完成。');
-  await activityService.updateParseStage(task.id, 'split', 'completed', `演示论文已被切分为 ${demoChapters.length} 个章节块。`);
-  await activityService.updateParseStage(task.id, 'dispatch', 'completed', '演示用专家审查结果已经生成，可直接浏览透明化分析过程。');
+  await activityService.updateParseStage(task.id, 'parse', 'completed', activityText('demoParseDetail', {}, 'en'));
+  await activityService.updateParseStage(task.id, 'split', 'completed', activityText('demoSplitDetail', { count: demoChapters.length }, 'en'));
+  await activityService.updateParseStage(task.id, 'dispatch', 'completed', activityText('demoDispatchDetail', {}, 'en'));
   await activityService.setChapterOutline(task.id, demoChapters.map((chapter) => ({
     chapterNo: chapter.chapterNo,
     chapterTitle: chapter.chapterTitle,
     content: chapter.content,
   })));
-  await activityService.setPhase(task.id, '演示项目已就绪，可直接体验透明化流程');
+  await activityService.setPhase(task.id, activityText('phaseDemoReady', {}, 'en'));
 
   const demoContributions: AgentContribution[] = [
     {
@@ -170,18 +187,18 @@ async function createDemoProject() {
       round: 1,
       agentName: contribution.agent_name,
       direction: 'instruction',
-      title: '演示任务已下发',
-      detail: `系统已为 ${contribution.agent_name} 生成演示审查任务。`,
-      promptSummary: '用于首次体验的演示型任务轨迹。',
+       title: activityText('demoInstructionTitle', {}, 'en'),
+       detail: activityText('demoInstructionDetail', { agent: contribution.agent_name }, 'en'),
+       promptSummary: activityText('demoInstructionSummary', {}, 'en'),
       rawPayload: { target_scope: contribution.target_scope },
     });
     await activityService.addConversation(task.id, {
       round: 1,
       agentName: contribution.agent_name,
       direction: 'response',
-      title: '演示结果已返回',
-      detail: `当前可查看 ${contribution.findings.length} 条问题和 ${contribution.suggestions.length} 条建议。`,
-      promptSummary: '用于首次体验的结构化演示结果。',
+       title: activityText('demoResponseTitle', {}, 'en'),
+       detail: activityText('demoResponseDetail', { findingCount: contribution.findings.length, suggestionCount: contribution.suggestions.length }, 'en'),
+       promptSummary: activityText('demoResponseSummary', {}, 'en'),
       rawPayload: contribution as unknown as Record<string, unknown>,
     });
     await activityService.addEvent(task.id, {
@@ -189,8 +206,8 @@ async function createDemoProject() {
       phase: 'demo-review',
       round: 1,
       agentName: contribution.agent_name,
-      title: `${contribution.agent_name} 演示结果已准备完成`,
-      message: `已为 ${contribution.agent_name} 准备好演示型发现结果。`,
+       title: activityText('demoEventTitle', { agent: contribution.agent_name }, 'en'),
+       message: activityText('demoEventMessage', { agent: contribution.agent_name }, 'en'),
       severity: 'success',
       payload: {
         findingsCount: contribution.findings.length,
@@ -222,23 +239,23 @@ async function createDemoProject() {
     requires_another_round: false,
   };
 
-  await activityService.setAgentStatus(task.id, 'chief_editor', 'completed', 'Unified demo diagnosis ready');
+  await activityService.setAgentStatus(task.id, 'chief_editor', 'completed', activityText('statusUnifiedDiagnosis', {}, 'en'));
     await activityService.addConversation(task.id, {
       round: 1,
       agentName: 'chief_editor',
       direction: 'instruction',
-      title: '演示汇总任务已下发',
-      detail: '总控编辑收到四个专家智能体的演示审查结果，并开始生成统一判断。',
-      promptSummary: '用于首次体验的总控演示汇总任务。',
+      title: activityText('demoChiefInstructionTitle', {}, 'en'),
+      detail: activityText('demoChiefInstructionDetail', {}, 'en'),
+      promptSummary: activityText('demoChiefInstructionSummary', {}, 'en'),
       rawPayload: { contributionCount: demoContributions.length },
     });
     await activityService.addConversation(task.id, {
       round: 1,
       agentName: 'chief_editor',
       direction: 'response',
-      title: '演示汇总结果已返回',
-      detail: '总控编辑已经为演示论文生成根因总结和修订路线。',
-      promptSummary: '用于首次体验的总控演示结果。',
+      title: activityText('demoChiefResponseTitle', {}, 'en'),
+      detail: activityText('demoChiefResponseDetail', {}, 'en'),
+      promptSummary: activityText('demoChiefResponseSummary', {}, 'en'),
       rawPayload: chiefDecision,
     });
   await activityService.recordChiefDecision(task.id, chiefDecision);
@@ -247,8 +264,8 @@ async function createDemoProject() {
     phase: 'demo-synthesis',
     round: 1,
     agentName: 'chief_editor',
-    title: '演示项目总控结果已生成',
-    message: '当前演示项目已经包含完整冲突图谱、章节轨迹与最终报告。',
+    title: activityText('demoChiefEventTitle', {}, 'en'),
+    message: activityText('demoChiefEventMessage', {}, 'en'),
     severity: 'success',
     payload: { overallScore: chiefDecision.overall_score },
   });
@@ -309,6 +326,7 @@ router.post('/', upload.single('file'), async (req, res) => {
         title: title,
         major: req.body.major || 'Unknown',
         stage: 'draft',
+        sourceText: rawText,
       }
     });
 
@@ -350,7 +368,7 @@ router.post('/demo', async (_req, res) => {
   try {
     const { project, task, report } = await createDemoProject();
     return res.json({
-      message: '演示项目创建成功。',
+      message: 'Demo project created successfully.',
       projectId: project.id,
       taskId: task.id,
       reportId: report.id,
@@ -358,6 +376,21 @@ router.post('/demo', async (_req, res) => {
   } catch (error: any) {
     console.error('Demo Project Error:', error);
     return res.status(500).json({ error: error.message || 'Failed to create demo project.' });
+  }
+});
+
+router.post('/re-run/:projectId', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const result = await restartProjectAnalysis(prisma, projectId);
+    return res.json(result);
+  } catch (error: any) {
+    if (error instanceof ProjectRerunError) {
+      return res.status(error.statusCode).json({ error: error.message });
+    }
+
+    console.error('Re-run Error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to restart project analysis.' });
   }
 });
 

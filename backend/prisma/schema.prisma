@@ -13,6 +13,7 @@ model PaperProject {
   major      String?
   stage      String?  @default("draft")
   status     String?  @default("active")
+  sourceText String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

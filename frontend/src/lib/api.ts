@@ -1,4 +1,30 @@
 import axios from 'axios';
+import { currentLocale, t } from './i18n';
+
+const AGENT_NAME_LABELS: Record<string, { zh: string; en: string }> = {
+  chief_editor: { zh: '总控编辑', en: 'Chief Editor' },
+  structure_agent: { zh: '结构智能体', en: 'Structure Agent' },
+  logic_agent: { zh: '逻辑智能体', en: 'Logic Agent' },
+  literature_agent: { zh: '文献智能体', en: 'Literature Agent' },
+  writing_agent: { zh: '写作智能体', en: 'Writing Agent' },
+  CHIEF: { zh: '总控编辑', en: 'Chief Editor' },
+  STRUCTURE: { zh: '结构智能体', en: 'Structure Agent' },
+  LOGIC: { zh: '逻辑智能体', en: 'Logic Agent' },
+  LITERATURE: { zh: '文献智能体', en: 'Literature Agent' },
+  WRITING: { zh: '写作智能体', en: 'Writing Agent' },
+};
+
+const PHASE_LABELS: Record<string, { zh: string; en: string }> = {
+  'Preparing multi-agent workflow': { zh: '正在准备多智能体流程', en: 'Preparing multi-agent workflow' },
+  'Final report ready': { zh: '最终报告已就绪', en: 'Final report ready' },
+  'Task created': { zh: '任务已创建', en: 'Task created' },
+  'Workflow failed': { zh: '流程执行失败', en: 'Workflow failed' },
+  'Upload accepted, preparing workflow': { zh: '上传已接收，正在准备流程', en: 'Upload accepted, preparing workflow' },
+  'Preparing shared context for all agents': { zh: '正在为所有智能体准备共享上下文', en: 'Preparing shared context for all agents' },
+  'Round 1 specialist review in progress (rate-limit friendly mode)': { zh: '第一轮专家评审进行中（限流友好模式）', en: 'Round 1 specialist review in progress (rate-limit friendly mode)' },
+  'Chief editor is synthesizing the final diagnosis': { zh: '总控编辑正在汇总最终诊断', en: 'Chief editor is synthesizing the final diagnosis' },
+  '演示项目已就绪，可直接体验透明化流程': { zh: '演示项目已就绪，可直接体验透明化流程', en: 'Demo project is ready for immediate transparent workflow exploration' },
+};
 
 export const api = axios.create({
   baseURL: 'http://localhost:3000/api',
@@ -110,6 +136,14 @@ export interface ProgressSnapshot {
     revision_plan?: string[];
     conflicts_detected?: Array<{ topic: string; resolution: string }>;
   };
+  i18n?: {
+    zh?: {
+      phase?: string;
+      agents?: Array<{ id: string; name: string; status: string }>;
+      events?: Array<{ id: string; title: string; message: string; phase: string }>;
+      parseStages?: Array<{ id: string; label: string; detail: string }>;
+    };
+  };
 }
 
 export const agentPalette: Record<string, { label: string; chip: string; tone: string }> = {
@@ -121,68 +155,115 @@ export const agentPalette: Record<string, { label: string; chip: string; tone: s
 };
 
 export function formatAgentName(agentName: string) {
+  const localized = AGENT_NAME_LABELS[agentName];
+  if (localized) return localized[currentLocale.value];
   return agentName
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+export function formatPhaseLabel(value?: string | null) {
+  const text = String(value || '');
+  if (!text) return t('noSnapshot');
+  return PHASE_LABELS[text]?.[currentLocale.value] || text;
+}
+
+export function localizeSnapshot(snapshot: ProgressSnapshot): ProgressSnapshot {
+  if (currentLocale.value !== 'zh' || !snapshot.i18n?.zh) return snapshot;
+
+  const zh = snapshot.i18n.zh;
+  const metadata = snapshot.metadata
+    ? {
+        ...snapshot.metadata,
+        parseStages: snapshot.metadata.parseStages.map((stage) => {
+          const localized = zh.parseStages?.find((item) => item.id === stage.id);
+          return localized ? { ...stage, label: localized.label, detail: localized.detail } : stage;
+        }),
+      }
+    : undefined;
+
+  return {
+    ...snapshot,
+    phase: zh.phase || snapshot.phase,
+    agents: snapshot.agents.map((agent) => {
+      const localized = zh.agents?.find((item) => item.id === agent.id);
+      return localized ? { ...agent, name: localized.name, status: localized.status } : { ...agent, name: formatAgentName(agent.id) };
+    }),
+    events: snapshot.events.map((event) => {
+      const localized = zh.events?.find((item) => item.id === event.id);
+      return localized ? { ...event, title: localized.title, message: localized.message, phase: localized.phase } : event;
+    }),
+    metadata,
+  };
+}
+
 export function formatJudgementLabel(value?: string | null) {
   const normalized = String(value || '').toLowerCase();
-  if (normalized === 'major_issue') return '主要问题';
-  if (normalized === 'minor_issue') return '次要问题';
-  if (normalized === 'no_issue') return '无问题';
-  if (!normalized) return '未知';
+  if (normalized === 'major_issue') return currentLocale.value === 'en' ? 'Major Issue' : '主要问题';
+  if (normalized === 'minor_issue') return currentLocale.value === 'en' ? 'Minor Issue' : '次要问题';
+  if (normalized === 'no_issue') return currentLocale.value === 'en' ? 'No Issue' : '无问题';
+  if (!normalized) return currentLocale.value === 'en' ? 'Unknown' : '未知';
   return value as string;
 }
 
 export function formatSeverityLabel(value?: string | null) {
   const normalized = String(value || '').toLowerCase();
-  if (normalized === 'high') return '高';
-  if (normalized === 'medium') return '中';
-  if (normalized === 'low') return '低';
+  if (normalized === 'high') return currentLocale.value === 'en' ? 'High' : '高';
+  if (normalized === 'medium') return currentLocale.value === 'en' ? 'Medium' : '中';
+  if (normalized === 'low') return currentLocale.value === 'en' ? 'Low' : '低';
   return value as string;
 }
 
 export function formatIssueTypeLabel(value?: string | null) {
   const normalized = String(value || '').toLowerCase();
-  const dict: Record<string, string> = {
-    structure: '结构问题',
-    logic: '逻辑问题',
-    literature_gap: '文献缺口',
-    writing_clarity: '写作清晰度问题',
-    'missing literature review chapter': '缺少独立文献综述章节',
-    'incomplete research loop': '研究闭环不完整',
-    'mixed results and discussion': '结果与讨论混杂',
-    'premature contribution claim in introduction': '绪论中过早提出贡献',
-    'inconsistent notation formatting': '符号与格式不一致',
-    'colloquial phrasing in technical description': '技术描述口语化',
-    'ambiguous pronoun reference': '代词指代不清',
-    'incomplete table caption': '表格标题不完整',
+  const dict: Record<string, { zh: string; en: string }> = {
+    structure: { zh: '结构问题', en: 'Structure Issue' },
+    logic: { zh: '逻辑问题', en: 'Logic Issue' },
+    literature_gap: { zh: '文献缺口', en: 'Literature Gap' },
+    writing_clarity: { zh: '写作清晰度问题', en: 'Writing Clarity Issue' },
+    'missing literature review chapter': { zh: '缺少独立文献综述章节', en: 'Missing Literature Review Chapter' },
+    'incomplete research loop': { zh: '研究闭环不完整', en: 'Incomplete Research Loop' },
+    'mixed results and discussion': { zh: '结果与讨论混杂', en: 'Mixed Results and Discussion' },
+    'premature contribution claim in introduction': { zh: '绪论中过早提出贡献', en: 'Premature Contribution Claim in Introduction' },
+    'inconsistent notation formatting': { zh: '符号与格式不一致', en: 'Inconsistent Notation Formatting' },
+    'colloquial phrasing in technical description': { zh: '技术描述口语化', en: 'Colloquial Technical Description' },
+    'ambiguous pronoun reference': { zh: '代词指代不清', en: 'Ambiguous Pronoun Reference' },
+    'incomplete table caption': { zh: '表格标题不完整', en: 'Incomplete Table Caption' },
   };
-  return dict[normalized] || (value as string);
+  return dict[normalized]?.[currentLocale.value] || (value as string);
 }
 
 export function formatTime(value?: string | null) {
   if (!value) return '--';
-  return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return new Date(value).toLocaleTimeString(currentLocale.value === 'en' ? 'en-US' : 'zh-CN', { hour: '2-digit', minute: '2-digit' });
+}
+
+export function formatTaskStatus(value?: string | null) {
+  const normalized = String(value || '').toLowerCase();
+  if (normalized === 'completed') return t('completed');
+  if (normalized === 'failed') return t('failed');
+  if (normalized === 'active' || normalized === 'running') return t('running');
+  if (normalized === 'pending') return t('pending');
+  if (normalized === 'idle') return t('idle');
+  return value || t('idle');
 }
 
 export function normalizeProgressSnapshot(input: Partial<ProgressSnapshot> | null | undefined): ProgressSnapshot {
   const fallbackAgents: ProgressAgent[] = [
-    { id: 'chief_editor', name: 'Chief Editor', state: 'running', status: 'Coordinating the review lane', findingsCount: 0, suggestionsCount: 0, collaborators: [], lastUpdate: null },
-    { id: 'structure_agent', name: 'Structure Agent', state: 'pending', status: 'Waiting for structure review', findingsCount: 0, suggestionsCount: 0, collaborators: [], lastUpdate: null },
-    { id: 'logic_agent', name: 'Logic Agent', state: 'pending', status: 'Waiting for logic review', findingsCount: 0, suggestionsCount: 0, collaborators: [], lastUpdate: null },
-    { id: 'literature_agent', name: 'Literature Agent', state: 'pending', status: 'Waiting for literature review', findingsCount: 0, suggestionsCount: 0, collaborators: [], lastUpdate: null },
-    { id: 'writing_agent', name: 'Writing Agent', state: 'pending', status: 'Waiting for writing review', findingsCount: 0, suggestionsCount: 0, collaborators: [], lastUpdate: null },
+    { id: 'chief_editor', name: formatAgentName('chief_editor'), state: 'running', status: currentLocale.value === 'en' ? 'Coordinating the review lane' : '正在统筹评审流程', findingsCount: 0, suggestionsCount: 0, collaborators: [], lastUpdate: null },
+    { id: 'structure_agent', name: formatAgentName('structure_agent'), state: 'pending', status: currentLocale.value === 'en' ? 'Waiting for structure review' : '等待结构评审', findingsCount: 0, suggestionsCount: 0, collaborators: [], lastUpdate: null },
+    { id: 'logic_agent', name: formatAgentName('logic_agent'), state: 'pending', status: currentLocale.value === 'en' ? 'Waiting for logic review' : '等待逻辑评审', findingsCount: 0, suggestionsCount: 0, collaborators: [], lastUpdate: null },
+    { id: 'literature_agent', name: formatAgentName('literature_agent'), state: 'pending', status: currentLocale.value === 'en' ? 'Waiting for literature review' : '等待文献评审', findingsCount: 0, suggestionsCount: 0, collaborators: [], lastUpdate: null },
+    { id: 'writing_agent', name: formatAgentName('writing_agent'), state: 'pending', status: currentLocale.value === 'en' ? 'Waiting for writing review' : '等待写作评审', findingsCount: 0, suggestionsCount: 0, collaborators: [], lastUpdate: null },
   ];
 
   return {
     taskId: input?.taskId || '',
     projectId: input?.projectId || '',
     projectTitle: input?.projectTitle || 'Untitled project',
-    major: input?.major || 'Unknown',
+    major: input?.major || (currentLocale.value === 'en' ? 'Unknown' : '未知'),
     status: input?.status || 'active',
-    phase: input?.phase || 'Preparing multi-agent workflow',
+    phase: formatPhaseLabel(input?.phase || 'Preparing multi-agent workflow'),
     currentRound: input?.currentRound || 1,
     startedAt: input?.startedAt || new Date().toISOString(),
     finishedAt: input?.finishedAt || null,
@@ -208,6 +289,12 @@ export interface DiagnosticsAgent {
   apiKeyPreview: string | null;
   connectivityStatus?: 'ok' | 'failed' | 'unknown';
   connectivityMessage?: string;
+  connectivityDetail?: {
+    statusCode: number | null;
+    durationMs: number;
+    testedAt: string;
+    errorSummary: string | null;
+  };
 }
 
 export interface DiagnosticsPayload {
