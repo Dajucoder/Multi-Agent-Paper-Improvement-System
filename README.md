@@ -6,7 +6,7 @@
 
 ## 当前版本
 
-- 当前项目版本：`v0.2.0`
+- 当前项目版本：`v0.2.1`
 - 发布日期：`2026-03-23`
 - 版本基准：以 Git tag 为准，前后端 `package.json` 与 release tag 保持一致
 - Release Notes：存放于 `docs/releases/`，推送 `v*` tag 后可自动触发 GitHub Release 工作流
@@ -405,5 +405,5 @@ npx prisma generate
 1. 更新 `CHANGELOG.md`
 2. 同步前后端版本号与目标 tag
 3. 在 `docs/releases/` 新建对应版本的 release notes
-4. 提交 release commit，并创建形如 `v0.2.0` 的 tag
+4. 提交 release commit，并创建形如 `v0.2.1` 的 tag
 5. 推送分支与 tag 后，GitHub Actions 会自动创建 Release
