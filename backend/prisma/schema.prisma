@@ -1,0 +1,99 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model PaperProject {
+  id         String   @id @default(uuid())
+  title      String
+  major      String?
+  stage      String?  @default("draft")
+  status     String?  @default("active")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  chapters   PaperChapter[]
+  tasks      CollaborationTask[]
+}
+
+model PaperChapter {
+  id           String       @id @default(uuid())
+  projectId    String
+  project      PaperProject @relation(fields: [projectId], references: [id])
+  chapterNo    Int
+  chapterTitle String
+  content      String
+  summary      String?
+  orderIndex   Int
+}
+
+model CollaborationTask {
+  id           String       @id @default(uuid())
+  projectId    String
+  project      PaperProject @relation(fields: [projectId], references: [id])
+  taskType     String       @default("full_review")
+  status       String       @default("pending") // pending, active, completed
+  currentRound Int          @default(1)
+  startedAt    DateTime?
+  finishedAt   DateTime?
+
+  agentRecords AgentReviewRecord[]
+  conflicts    AgentConflictRecord[]
+  blackboards  BlackboardSnapshot[]
+  reports      DiagnosisReport[]
+}
+
+model AgentReviewRecord {
+  id             String            @id @default(uuid())
+  taskId         String
+  task           CollaborationTask @relation(fields: [taskId], references: [id])
+  agentName      String
+  reviewRound    Int
+  targetScope    String
+  findingsJson   String            // JSON string
+  score          Float?
+  createdAt      DateTime          @default(now())
+}
+
+model AgentConflictRecord {
+  id                 String            @id @default(uuid())
+  taskId             String
+  task               CollaborationTask @relation(fields: [taskId], references: [id])
+  topic              String
+  conflictingAgents  String            // Comma separated
+  conflictDetail     String
+  finalDecision      String?
+  createdAt          DateTime          @default(now())
+}
+
+model BlackboardSnapshot {
+  id                  String            @id @default(uuid())
+  taskId              String
+  task                CollaborationTask @relation(fields: [taskId], references: [id])
+  roundNo             Int
+  globalSummary       String?
+  keyIssuesJson       String?           // JSON string
+  rootCausesJson      String?           // JSON string
+  chapterInsightsJson String?           // JSON string
+  createdAt           DateTime          @default(now())
+}
+
+model DiagnosisReport {
+  id                  String            @id @default(uuid())
+  taskId              String
+  task                CollaborationTask @relation(fields: [taskId], references: [id])
+  overallScore        Float?
+  structureScore      Float?
+  logicScore          Float?
+  literatureScore     Float?
+  writingScore        Float?
+  formatScore         Float?
+  riskScore           Float?
+  rootCauseSummary    String?
+  revisionPlan        String?           // JSON string
+  createdAt           DateTime          @default(now())
+}
