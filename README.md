@@ -17,10 +17,12 @@
 - 透明化工作流：事件流、Prompt Trace、Agent Findings、Chief Decision
 - 章节级洞察：自动切分章节、查看每章命中问题与建议
 - 冲突图谱：展示不同智能体在同一章节或同一问题链上的关联与冲突
+- 双语国际化（i18n）：前端完整中英文支持，后端活动消息国际化，API 返回双语内容
 - 导出能力：支持 Markdown、Word 友好文本、DOCX 报告导出
 - 运行时并发控制：可设置真实评审并发数，适配不同模型平台限流策略
 - 工作台持续产品化：支持项目删除、项目重新分析、搜索高亮、分页与页大小切换
 - 在线系统调优：支持连通性重测、测试历史缓存、模型配置在线编辑与即时保存
+- 代理配置持久化：在线修改 API URL/Key/Model 后自动保存到 `.env` 文件
 
 ## 系统页面
 
@@ -61,13 +63,14 @@
 │   └── src/
 │       ├── agents/           # 专家智能体与总控逻辑
 │       ├── engine/           # 工作流、黑板、活动追踪
+│       ├── lib/              # i18n 活动消息翻译等公共库
 │       ├── modules/          # upload / project / system 等路由模块
 │       ├── parser/           # PDF / DOCX / chapter splitter
 │       └── llm/              # OpenAI 兼容 LLM 调用封装
 ├── frontend/                 # 前端界面
 │   └── src/
 │       ├── pages/            # 首页、上传、进度、报告、帮助等页面
-│       ├── lib/              # API 与前端格式化逻辑
+│       ├── lib/              # API、i18n 与前端格式化逻辑
 │       └── store/            # Pinia 状态管理
 ├── docs/                     # 示例论文、补充文档
 ├── start.sh                  # macOS / Linux 一键启动
@@ -266,9 +269,25 @@ pkill -f "vite"
 你也可以直接在系统检查页：
 
 - 修改评审并发数，适配不同平台的限流策略
-- 手动发起连通性测试并查看详细结果
+- 手动发起连通性测试并查看详细结果（含状态码、耗时、错误摘要）
 - 查看最近测试历史缓存
-- 在线修改每个智能体的 API URL、模型和密钥
+- 在线修改每个智能体的 API URL、模型和密钥（自动保存到 `.env`）
+
+### API 接口说明
+
+系统检查相关 API：
+
+- `GET /api/system/diagnostics` - 获取系统诊断信息
+- `POST /api/system/diagnostics/connectivity` - 手动触发连通性测试
+- `POST /api/system/diagnostics/agents/:agentName` - 更新指定智能体配置
+- `POST /api/system/settings/review-concurrency` - 修改评审并发数
+
+项目管理相关 API：
+
+- `GET /api/projects` - 获取项目列表
+- `POST /api/projects` - 创建新项目
+- `DELETE /api/projects/:projectId` - 删除项目（级联清理）
+- `POST /api/projects/:projectId/re-run` - 重新分析项目
 
 ## 工作台增强
 
@@ -348,6 +367,8 @@ npx prisma generate
 - 如果模型平台频繁限流，优先把并发数设置为 `1`
 - 如果输出中仍存在较多英文，可以继续增强术语白名单与字段级中文化规则
 - 如果需要更稳定的大文件解析，建议后续引入更强的 PDF 结构化解析器
+- 前端 i18n 翻译文件位于 `frontend/src/lib/i18n.ts`，可扩展其他语言
+- 后端 i18n 活动消息文件位于 `backend/src/lib/activity-i18n.ts`
 
 ## 已知边界
 
@@ -364,6 +385,7 @@ npx prisma generate
 - 更稳定的字段级中文化
 - 更丰富的导出格式
 - 多轮审查策略与更智能的冲突协调
+- 国际化扩展（更多语言支持）
 
 ## 维护者联系方式
 
