@@ -1,58 +1,102 @@
 <template>
-  <div class="max-w-3xl mx-auto py-10">
-    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
-      <div class="px-8 py-10">
-        <h2 class="text-3xl font-bold text-gray-900 text-center mb-2">Upload Research Paper</h2>
-        <p class="text-gray-500 text-center mb-8">Let the multi-agent system analyze and improve your thesis.</p>
-        
+  <div class="space-y-8 animate-fade-in">
+    <section class="hero-panel overflow-hidden rounded-[32px] px-6 py-8 sm:px-8 lg:px-10">
+      <div class="grid gap-8 lg:grid-cols-[1fr_0.95fr] lg:items-center">
+        <div>
+          <p class="hero-kicker">New Review Intake</p>
+          <h1 class="mt-4 text-4xl font-semibold leading-tight text-white sm:text-5xl">
+            上传论文，同时把后续协作过程完整暴露给用户。
+          </h1>
+          <p class="hero-copy mt-5 max-w-2xl text-sm leading-7 sm:text-base">
+            从上传开始，系统就会在前端展示接收状态、总控调度、各智能体回执和统一诊断过程，而不是只给用户一个单薄的 loading 页面。
+          </p>
+        </div>
+        <div class="rounded-[28px] border border-white/15 bg-black/18 p-5 backdrop-blur-sm text-sm text-white/78">
+          <p class="uppercase tracking-[0.24em] text-white/50">Workflow Preview</p>
+          <div class="mt-4 space-y-3">
+            <div class="preview-step">1. 接收论文并创建任务</div>
+            <div class="preview-step">2. Chief Editor 分发并行审查</div>
+            <div class="preview-step">3. 实时展示事件、对话、发现</div>
+            <div class="preview-step">4. 生成 root cause 与修订路线</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="glass-panel p-6 sm:p-8">
+      <div class="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
         <form @submit.prevent="submitUpload" class="space-y-6">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Paper Title</label>
-            <input v-model="form.title" type="text" placeholder="e.g. Analysis of Deep Learning in Healthcare" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" />
+            <label class="form-label">论文标题</label>
+            <input v-model="form.title" type="text" placeholder="例如：面向学术写作诊断的多智能体协作系统" class="form-input" />
           </div>
-          
+
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Major / Field</label>
-            <input v-model="form.major" type="text" placeholder="e.g. Computer Science" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" />
+            <label class="form-label">专业 / 方向</label>
+            <input v-model="form.major" type="text" placeholder="例如：计算机科学与技术" class="form-input" />
           </div>
-          
-          <div class="mt-8">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Upload Document (PDF or DOCX)</label>
-            <div 
-              class="border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-colors"
-              :class="file ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-indigo-400 hover:bg-gray-50'"
+
+          <div>
+            <label class="form-label">评审并发数</label>
+            <div class="rounded-[20px] border border-[rgba(31,45,61,0.12)] bg-white px-4 py-4">
+              <div class="flex items-center gap-3">
+                <input v-model.number="form.reviewMaxConcurrency" type="range" min="1" max="4" step="1" class="w-full" />
+                <span class="tag">{{ form.reviewMaxConcurrency }}</span>
+              </div>
+              <p class="mt-3 text-sm text-[var(--ink-muted)]">建议默认使用 `1`，更适合当前限流友好模式；如果模型平台额度充足，可以尝试提高到 `2-4`。</p>
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label">论文文件</label>
+            <div
+              class="upload-zone"
+              :class="file ? 'is-selected' : ''"
               @click="triggerFileSelect"
             >
               <input type="file" ref="fileInput" class="hidden" @change="onFileChange" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
-              
-              <div v-if="!file">
-                <svg class="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                </svg>
-                <p class="text-gray-600 font-medium">Click to select a file or drag and drop</p>
-                <p class="text-sm text-gray-500 mt-1">PDF or DOCX up to 10MB</p>
+              <div v-if="!file" class="space-y-3 text-center">
+                <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[rgba(21,120,123,0.14)] text-2xl text-[var(--teal)]">+</div>
+                <div>
+                  <p class="text-base font-semibold text-[var(--ink)]">点击选择 PDF 或 DOCX 文件</p>
+                  <p class="mt-1 text-sm text-[var(--ink-muted)]">支持毕业论文、阶段稿、整篇研究文档</p>
+                </div>
               </div>
-              <div v-else class="flex flex-col items-center">
-                <svg class="mx-auto h-12 w-12 text-indigo-500 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <p class="text-indigo-700 font-bold">{{ file.name }}</p>
-                <p class="text-sm text-indigo-500">{{ (file.size / 1024 / 1024).toFixed(2) }} MB</p>
+              <div v-else class="space-y-2 text-center">
+                <p class="text-base font-semibold text-[var(--ink)]">{{ file.name }}</p>
+                <p class="text-sm text-[var(--ink-muted)]">{{ (file.size / 1024 / 1024).toFixed(2) }} MB</p>
               </div>
             </div>
           </div>
-          
-          <button 
-            type="submit" 
-            :disabled="uploading || !file"
-            class="w-full py-4 px-6 rounded-xl text-white font-bold text-lg shadow-lg transition-all"
-            :class="uploading || !file ? 'bg-indigo-300 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:scale-[1.02]'"
-          >
-            {{ uploading ? 'Uploading and Analyzing...' : 'Start Collaborative Analysis' }}
+
+          <button type="submit" :disabled="uploading || !file" class="action-button w-full disabled:cursor-not-allowed disabled:opacity-50">
+            {{ uploading ? '正在创建透明化分析任务...' : '启动透明化协同分析' }}
           </button>
         </form>
+
+        <div class="space-y-5">
+          <div class="rounded-[26px] bg-[var(--paper)] p-5">
+            <p class="text-xs uppercase tracking-[0.18em] text-[var(--ink-muted)]">用户视角增强</p>
+            <div class="mt-4 grid gap-3">
+              <div class="feature-card">实时显示总控与各智能体状态</div>
+              <div class="feature-card">展示黑板日志而非纯模拟 loading</div>
+              <div class="feature-card">允许查看 prompt/response 摘要</div>
+              <div class="feature-card">自动跳转到透明进度页继续观察</div>
+            </div>
+          </div>
+
+          <div class="rounded-[26px] border border-[rgba(31,45,61,0.08)] bg-white p-5">
+            <p class="text-xs uppercase tracking-[0.18em] text-[var(--ink-muted)]">上传后会发生什么</p>
+            <ol class="mt-4 space-y-3 text-sm leading-7 text-[var(--ink-soft)]">
+              <li>1. 后端创建项目和协作任务。</li>
+              <li>2. 前端进入进度页并开始轮询透明快照。</li>
+              <li>3. 用户看到所有关键事件与智能体工作痕迹。</li>
+              <li>4. 完成后可一键进入诊断报告页。</li>
+            </ol>
+          </div>
+        </div>
       </div>
-    </div>
+    </section>
   </div>
 </template>
 
@@ -60,14 +104,15 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAppStore } from '../store';
-import axios from 'axios';
+import { api } from '../lib/api';
 
 const router = useRouter();
 const store = useAppStore();
 
 const form = ref({
   title: '',
-  major: ''
+  major: '',
+  reviewMaxConcurrency: 1,
 });
 const file = ref<File | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -90,26 +135,23 @@ const onFileChange = (e: Event) => {
 const submitUpload = async () => {
   if (!file.value) return;
   uploading.value = true;
-  
+
   const formData = new FormData();
   formData.append('file', file.value);
   formData.append('title', form.value.title);
   formData.append('major', form.value.major);
+  formData.append('reviewMaxConcurrency', String(form.value.reviewMaxConcurrency));
 
   try {
-    const res = await axios.post('http://localhost:3000/api/upload', formData, {
+    const res = await api.post('/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
-    
-    // Set active task context
-    store.setProject(res.data.projectId, res.data.taskId);
-    
-    // Navigate to progress visualization
-    router.push(`/project/${res.data.projectId}/progress`);
 
+    store.setProject(res.data.projectId, res.data.taskId);
+    router.push(`/project/${res.data.projectId}/progress`);
   } catch (error) {
     console.error('Upload failed:', error);
-    alert('Upload failed. Check console for details.');
+    alert('上传失败，请检查后端日志或模型配置。');
   } finally {
     uploading.value = false;
   }

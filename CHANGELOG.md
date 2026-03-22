@@ -1,0 +1,17 @@
+# Changelog
+
+## Unreleased
+
+- 重构首页为“产品首页 + 项目工作台”双态首页
+- 新增帮助中心、系统检查页、章节详情页
+- 新增透明化活动追踪、SSE 实时流、章节切分详情与冲突图谱
+- 新增 Demo 项目一键体验
+- 修复 `.env` 根目录读取问题
+- 新增限流友好模式、重试机制与可配置评审并发数
+- 新增 Markdown / TXT / DOCX 报告导出
+- 增强前端可读性与对比度，修复多处文字与背景融合问题
+- 增强中文输出策略，并对前端 judgement / severity / issue type 做中文映射
+
+## 0.1.0
+
+- Initial MVP for Multi-Agent Paper Improvement System

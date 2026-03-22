@@ -2,6 +2,9 @@ node_modules/
 .env
 .env.local
 .DS_Store
+.turbo/
+.idea/
+.vscode/
 dist/
 build/
 coverage/
@@ -14,12 +17,25 @@ npm-debug.log*
 # Database
 dev.db
 dev.db-journal
+backend/prisma/dev.db
+backend/prisma/dev.db-journal
+backend/dev.db
+backend/dev.db-journal
 
 # IDEs and Editors
-.idea/
-.vscode/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# Local tool outputs
+.opencode/
+/Users/mac/.local/share/opencode/
+
+# Test artifacts
+playwright-report/
+test-results/
+
+# Large local document samples
+docs/*.pdf

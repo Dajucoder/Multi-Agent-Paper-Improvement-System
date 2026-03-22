@@ -20,6 +20,21 @@ const routes = [
     path: '/project/:id/report',
     name: 'DiagnosisReport',
     component: () => import('../pages/DiagnosisReport.vue'),
+  },
+  {
+    path: '/project/:id/chapter/:chapterNo',
+    name: 'ChapterDetail',
+    component: () => import('../pages/ChapterDetail.vue'),
+  },
+  {
+    path: '/help',
+    name: 'HelpCenter',
+    component: () => import('../pages/HelpCenter.vue'),
+  },
+  {
+    path: '/system-check',
+    name: 'SystemCheck',
+    component: () => import('../pages/SystemCheck.vue'),
   }
 ];
 

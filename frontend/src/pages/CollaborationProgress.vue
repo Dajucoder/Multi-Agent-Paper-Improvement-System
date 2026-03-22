@@ -1,154 +1,299 @@
 <template>
-  <div class="max-w-5xl mx-auto py-8 animate-fade-in">
-    <div class="mb-8 flex justify-between items-center">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">Multi-Agent Collaboration Progress</h1>
-        <p class="text-gray-500 mt-1">Agents are analyzing the paper across multiple dimensions.</p>
-      </div>
-      <div v-if="taskStatus === 'active'" class="flex items-center space-x-2 text-indigo-600 font-medium">
-        <span class="relative flex h-3 w-3">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
-        </span>
-        <span>Analysis in Progress</span>
-      </div>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <!-- Agent Status List -->
-      <div class="lg:col-span-1 space-y-4">
-        <div v-for="agent in agents" :key="agent.id" class="flex items-center p-4 bg-white rounded-xl shadow-sm border border-gray-100 transition" :class="agent.active ? 'ring-2 ring-indigo-500' : ''">
-          <div class="flex-shrink-0 mr-4 h-10 w-10 rounded-full flex items-center justify-center text-white font-bold" :class="agent.color">
-            {{ agent.icon }}
+  <div class="space-y-8 animate-fade-in">
+    <section class="hero-panel overflow-hidden rounded-[32px] px-6 py-8 sm:px-8 lg:px-10">
+      <div class="grid gap-8 lg:grid-cols-[1.3fr_0.7fr]">
+        <div class="space-y-5">
+          <div class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs uppercase tracking-[0.24em] text-white/80">
+            <span>Transparent Review Flow</span>
+            <span>{{ statusLabel }}</span>
           </div>
-          <div class="flex-grow">
-            <h4 class="text-sm font-bold text-gray-900">{{ agent.name }}</h4>
-            <p class="text-xs text-gray-500">{{ agent.status }}</p>
+          <div>
+            <p class="text-sm uppercase tracking-[0.28em] text-white/55">{{ snapshot.major }}</p>
+            <h1 class="mt-3 max-w-3xl text-3xl font-semibold text-white sm:text-4xl lg:text-5xl">{{ snapshot.projectTitle }}</h1>
+            <p class="mt-4 max-w-2xl text-sm leading-7 text-white/72 sm:text-base">
+              现在不仅能看见解析、日志和冲突，还能以章节维度查看被哪些智能体命中，以及冲突图谱到底由哪些 issue 连接出来。
+            </p>
           </div>
-          <div v-if="agent.active">
-            <svg class="animate-spin h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-          </div>
-          <div v-else-if="agent.done">
-            <svg class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+          <div class="grid gap-3 sm:grid-cols-4">
+            <div class="metric-card"><span class="metric-label">Current Phase</span><strong class="metric-value">{{ snapshot.phase }}</strong></div>
+            <div class="metric-card"><span class="metric-label">Round</span><strong class="metric-value">{{ snapshot.currentRound }}</strong></div>
+            <div class="metric-card"><span class="metric-label">Progress</span><strong class="metric-value">{{ snapshot.progressPercent }}%</strong></div>
+            <div class="metric-card"><span class="metric-label">Transport</span><strong class="metric-value">{{ streamState }}</strong></div>
           </div>
         </div>
-      </div>
 
-      <!-- Blackboard Visualization -->
-      <div class="lg:col-span-2">
-        <div class="bg-gray-900 rounded-2xl shadow-xl overflow-hidden flex flex-col h-[500px]">
-          <div class="bg-black/40 px-6 py-4 flex justify-between items-center border-b border-gray-800">
-            <div class="flex items-center space-x-2">
-              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-              <h3 class="text-gray-200 font-mono text-sm tracking-widest">SHARED_BLACKBOARD</h3>
-            </div>
-            <span class="text-xs text-gray-500 font-mono">ROUND 1</span>
+        <div class="rounded-[28px] border border-white/15 bg-black/18 p-5 backdrop-blur-sm">
+          <div class="flex items-center justify-between text-sm text-white/75">
+            <span>Pipeline Completion</span>
+            <span>{{ snapshot.progressPercent }}%</span>
           </div>
-          <div class="p-6 overflow-y-auto space-y-4 flex-grow font-mono text-sm" ref="logContainer">
-            <div v-for="(log, i) in blackboardLogs" :key="i" class="animate-fade-in-up">
-              <span class="text-gray-500 mr-3">[{{ log.time }}]</span>
-              <span :class="log.color">{{ log.agent }}:</span>
-              <span class="text-gray-300 ml-2">{{ log.message }}</span>
+          <div class="mt-3 h-3 overflow-hidden rounded-full bg-white/10">
+            <div class="h-full rounded-full bg-[linear-gradient(90deg,var(--gold),#f2cf85,var(--sage))] transition-all duration-500" :style="{ width: `${snapshot.progressPercent}%` }"></div>
+          </div>
+          <div class="mt-6 space-y-3">
+            <div v-for="agent in snapshot.agents" :key="agent.id" class="rounded-2xl border border-white/10 bg-white/6 p-4">
+              <div class="flex items-start justify-between gap-4">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="h-2.5 w-2.5 rounded-full" :style="{ backgroundColor: palette(agent.id).chip }"></span>
+                    <h2 class="text-sm font-semibold text-white">{{ agent.name }}</h2>
+                  </div>
+                  <p class="mt-1 text-xs leading-5 text-white/60">{{ agent.status }}</p>
+                </div>
+                <span class="status-pill" :data-state="agent.state">{{ stateLabel(agent.state) }}</span>
+              </div>
+              <div class="mt-4 grid grid-cols-3 gap-3 text-xs text-white/72">
+                <div><span class="block text-white/45">Findings</span><strong>{{ agent.findingsCount }}</strong></div>
+                <div><span class="block text-white/45">Suggestions</span><strong>{{ agent.suggestionsCount }}</strong></div>
+                <div><span class="block text-white/45">Last Update</span><strong>{{ formatTime(agent.lastUpdate) }}</strong></div>
+              </div>
             </div>
           </div>
         </div>
-        
-        <div class="mt-6 flex justify-end">
-          <button 
-            v-if="taskStatus === 'completed'"
-            @click="viewReport"
-            class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-xl shadow-md transition-all flex items-center"
-          >
-            <span>View Final Report</span>
-            <svg class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-          </button>
-        </div>
       </div>
-    </div>
+    </section>
+
+    <section class="grid gap-6 xl:grid-cols-[1.05fr_1.05fr_0.9fr]">
+      <article class="glass-panel p-6">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">Chapter Split</p>
+            <h2 class="section-title">章节与命中问题</h2>
+          </div>
+          <span class="section-chip">{{ chapterCount }} chapters</span>
+        </div>
+        <div class="mt-5 space-y-4 max-h-[44rem] overflow-y-auto pr-1">
+          <details v-for="chapter in snapshot.metadata?.chapters || []" :key="`${chapter.chapterNo}-${chapter.chapterTitle}`" class="detail-accordion finding-card" :open="selectedChapter === chapter.chapterTitle" @toggle="onChapterToggle(chapter.chapterTitle, $event)">
+            <summary>
+              <div>
+                <p class="text-sm font-semibold text-[var(--ink)]">{{ chapter.chapterNo }}. {{ chapter.chapterTitle }}</p>
+                <p class="mt-1 text-xs uppercase tracking-[0.14em] text-[var(--ink-muted)]">{{ chapter.wordCount }} words · {{ chapter.findings.length }} linked findings</p>
+              </div>
+                <div class="flex items-center gap-2">
+                  <button class="tag" type="button" @click.stop="openChapter(chapter.chapterNo)">Open</button>
+                  <span class="tag">Inspect</span>
+                </div>
+            </summary>
+            <p class="mt-4 text-sm leading-7 text-[var(--ink-soft)]">{{ chapter.preview || 'No preview available.' }}</p>
+            <div class="mt-4 space-y-3" v-if="chapter.findings.length">
+              <div v-for="finding in chapter.findings" :key="finding.issueId" class="rounded-2xl bg-[var(--paper)] p-3">
+                <div class="flex items-center justify-between gap-3">
+                  <span class="text-sm font-semibold text-[var(--ink)]">{{ formatAgentName(finding.agentName) }}</span>
+                  <span class="tag">{{ formatSeverityLabel(finding.severity) }}</span>
+                </div>
+                <p class="mt-2 text-sm leading-6 text-[var(--ink-soft)]">{{ finding.description }}</p>
+                <p class="mt-2 text-xs text-[var(--ink-muted)]">{{ finding.issueId }} · {{ finding.location || 'No location' }}</p>
+              </div>
+            </div>
+            <div v-else class="empty-state mt-4">当前还没有智能体把问题定位到这一章。</div>
+          </details>
+        </div>
+      </article>
+
+      <article class="glass-panel p-6">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">Conflict Graph</p>
+            <h2 class="section-title">结构化冲突关系</h2>
+          </div>
+          <span class="section-chip">{{ snapshot.metadata?.conflictGraph?.length || 0 }} edges</span>
+        </div>
+        <div v-if="snapshot.metadata?.conflictGraph?.length" class="mt-5 space-y-4 max-h-[44rem] overflow-y-auto pr-1">
+          <details v-for="(edge, index) in snapshot.metadata?.conflictGraph || []" :key="`${edge.source}-${edge.target}-${index}`" class="detail-accordion finding-card" :open="selectedConflict === index" @toggle="onConflictToggle(index, $event)">
+            <summary>
+              <div>
+                <div class="flex items-center gap-3 text-sm font-semibold text-[var(--ink)]">
+                  <span class="conflict-node" :style="{ backgroundColor: palette(edge.source).tone, color: palette(edge.source).chip }">{{ shortName(edge.source) }}</span>
+                  <span class="text-[var(--ink-muted)]">→</span>
+                  <span class="conflict-node" :style="{ backgroundColor: palette(edge.target).tone, color: palette(edge.target).chip }">{{ shortName(edge.target) }}</span>
+                </div>
+                <p class="mt-3 text-sm font-semibold text-[var(--ink)]">{{ edge.topic }}</p>
+                <p class="mt-2 text-sm leading-6 text-[var(--ink-soft)]">{{ edge.reason }}</p>
+              </div>
+              <span class="tag">{{ edge.weight }} links</span>
+            </summary>
+            <div class="mt-4 grid gap-3 sm:grid-cols-2">
+              <div class="rounded-2xl bg-[var(--paper)] p-3">
+                <p class="text-xs uppercase tracking-[0.14em] text-[var(--ink-muted)]">Issue IDs</p>
+                <div class="mt-2 flex flex-wrap gap-2">
+                  <span v-for="issueId in edge.issueIds" :key="issueId" class="tag">{{ issueId }}</span>
+                </div>
+              </div>
+              <div class="rounded-2xl bg-[var(--paper)] p-3">
+                <p class="text-xs uppercase tracking-[0.14em] text-[var(--ink-muted)]">Locations</p>
+                <div class="mt-2 flex flex-wrap gap-2">
+                  <span v-for="location in edge.locations" :key="location" class="tag">{{ location || 'Unknown' }}</span>
+                </div>
+              </div>
+            </div>
+          </details>
+        </div>
+        <div v-else class="empty-state mt-5">当前还没有结构化冲突边。等不同智能体在同一位置或问题链上产生交叉时，这里会自动成图。</div>
+      </article>
+
+      <article class="space-y-6">
+        <div class="glass-panel p-6">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">Parsing Timeline</p>
+              <h2 class="section-title">上传后解析状态</h2>
+            </div>
+          </div>
+          <div v-if="snapshot.status === 'failed'" class="mt-5 rounded-2xl border border-[rgba(176,88,52,0.18)] bg-[rgba(176,88,52,0.08)] p-4 text-sm leading-7 text-[var(--rust)]">
+            当前任务执行失败。若错误消息中包含“限流”或 `449/429`，说明上游模型接口暂时限制了请求频率；系统已经自动重试并采用限流友好模式，但本次仍未成功。
+          </div>
+          <div class="mt-5 space-y-3">
+            <div v-for="stage in snapshot.metadata?.parseStages || []" :key="stage.id" class="timeline-card">
+              <div class="flex items-center justify-between gap-4">
+                <div>
+                  <p class="text-sm font-semibold text-[var(--ink)]">{{ stage.label }}</p>
+                  <p class="mt-2 text-sm leading-6 text-[var(--ink-soft)]">{{ stage.detail }}</p>
+                </div>
+                <span class="status-pill" :data-state="stage.status === 'completed' ? 'completed' : stage.status === 'running' ? 'running' : 'pending'">{{ stateLabel(stage.status) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-panel p-6">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">Agent Ledger</p>
+              <h2 class="section-title">审查详情面板</h2>
+            </div>
+          </div>
+          <div class="mt-5 space-y-4 max-h-[20rem] overflow-y-auto pr-1">
+            <details v-for="finding in snapshot.findings" :key="`${finding.agent_name}-${finding.review_round}`" class="detail-accordion finding-card" :style="conversationStyle(finding.agent_name)">
+              <summary>
+                <div>
+                  <p class="text-sm font-semibold text-[var(--ink)]">{{ formatAgentName(finding.agent_name) }}</p>
+                  <p class="mt-1 text-xs uppercase tracking-[0.14em] text-[var(--ink-muted)]">{{ formatJudgementLabel(finding.overall_judgement) }}</p>
+                </div>
+                <span class="tag">{{ finding.findings.length }} issues</span>
+              </summary>
+              <div class="mt-4 space-y-3">
+                <div v-for="issue in finding.findings" :key="issue.issue_id" class="rounded-2xl bg-white/80 p-3 text-sm text-[var(--ink-soft)]">
+                  <div class="flex items-center justify-between gap-3"><strong class="text-[var(--ink)]">{{ formatIssueTypeLabel(issue.issue_type) }}</strong><span class="tag">{{ formatSeverityLabel(issue.severity) }}</span></div>
+                  <p class="mt-2 leading-6">{{ issue.description }}</p>
+                  <p class="mt-2 text-xs text-[var(--ink-muted)]">{{ issue.issue_id }} · {{ issue.location || 'No location' }}</p>
+                </div>
+              </div>
+            </details>
+          </div>
+        </div>
+
+        <div class="glass-panel p-6">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">Chief Decision</p>
+              <h2 class="section-title">总控综合判断</h2>
+            </div>
+          </div>
+          <div v-if="snapshot.chiefDecision" class="mt-5 space-y-4">
+            <div class="rounded-2xl bg-[var(--paper)] p-4">
+              <p class="text-xs uppercase tracking-[0.16em] text-[var(--ink-muted)]">Root Cause</p>
+              <p class="mt-2 text-sm leading-6 text-[var(--ink-soft)]">{{ snapshot.chiefDecision.root_cause_summary }}</p>
+            </div>
+            <ol class="space-y-2 text-sm leading-6 text-[var(--ink-soft)]"><li v-for="(step, index) in chiefPlan" :key="`${index}-${step}`">{{ index + 1 }}. {{ step }}</li></ol>
+            <button v-if="snapshot.status === 'completed'" @click="router.push(`/project/${projectId}/report`)" class="action-button w-full">打开完整诊断报告</button>
+          </div>
+          <div v-else class="empty-state mt-5">总控尚未完成综合判断，这里会在 SSE 推送后自动更新。</div>
+        </div>
+      </article>
+    </section>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import axios from 'axios';
+import { storeToRefs } from 'pinia';
+import { useAppStore } from '../store';
+import { agentPalette, createProjectStream, formatAgentName, formatIssueTypeLabel, formatJudgementLabel, formatSeverityLabel, formatTime, normalizeProgressSnapshot } from '../lib/api';
 
 const route = useRoute();
 const router = useRouter();
+const store = useAppStore();
+const { projectSnapshot } = storeToRefs(store);
 const projectId = route.params.id as string;
+const poller = ref<number | null>(null);
+const stream = ref<EventSource | null>(null);
+const streamState = ref('Polling');
+const selectedChapter = ref('');
+const selectedConflict = ref<number | null>(null);
 
-// Mock Agent Data for visualization (In real app, fetch via WebSocket or polling)
-const agents = ref([
-  { id: 'master', name: 'Chief Editor Agent', status: 'Orchestrating Workflow...', icon: '👑', color: 'bg-purple-500', active: true, done: false },
-  { id: 'structure', name: 'Structure Agent', status: 'Analyzing Chapter Outlines...', icon: '🏗', color: 'bg-blue-500', active: true, done: false },
-  { id: 'logic', name: 'Logic Agent', status: 'Evaluating Reasoning Chain...', icon: '🧠', color: 'bg-indigo-500', active: true, done: false },
-  { id: 'literature', name: 'Literature Agent', status: 'Checking Theoretical Foundations...', icon: '📚', color: 'bg-emerald-500', active: true, done: false },
-  { id: 'writing', name: 'Writing Agent', status: 'Polishing Academic Tone...', icon: '🖋', color: 'bg-rose-500', active: true, done: false },
-]);
+const snapshot = computed(() => normalizeProgressSnapshot(projectSnapshot.value?.snapshot));
+const statusLabel = computed(() => snapshot.value.status === 'completed' ? 'Report Ready' : snapshot.value.status === 'failed' ? 'Needs Attention' : 'Live');
+const chiefPlan = computed(() => snapshot.value.chiefDecision?.revision_plan?.length ? snapshot.value.chiefDecision.revision_plan : []);
+const chapterCount = computed(() => snapshot.value.metadata?.chapters?.length || 0);
 
-const blackboardLogs = ref([
-  { time: '00:01', agent: 'System', message: 'Initialized task. Full paper parsed into 6 chapters.', color: 'text-gray-400' },
-  { time: '00:03', agent: 'Chief Editor', message: 'Dispatched Round 1 tasks to sub-agents.', color: 'text-purple-400' }
-]);
+function palette(agentName: string) {
+  return agentPalette[agentName] || { label: agentName, chip: 'var(--ink)', tone: 'rgba(31, 45, 61, 0.08)' };
+}
 
-const taskStatus = ref('active');
+function shortName(agentName: string) {
+  return formatAgentName(agentName).replace(' Agent', '');
+}
 
-onMounted(() => {
-  // Simulate polling and log streaming so the user sees something beautiful
-  let step = 0;
-  const timer = setInterval(() => {
-    step++;
-    if (step === 1) {
-      blackboardLogs.value.push({ time: `00:0${step+4}`, agent: 'Structure Agent', message: 'Found overlap between Chapter 3 and Chapter 4 responsibilities.', color: 'text-blue-400' });
-      agents.value[1].status = 'Drafting suggestions...';
-    }
-    if (step === 2) {
-      blackboardLogs.value.push({ time: `00:0${step*4}`, agent: 'Writing Agent', message: 'Identified 14 colloquial expressions in the Abstract.', color: 'text-rose-400' });
-      agents.value[4].active = false;
-      agents.value[4].done = true;
-      agents.value[4].status = 'Analysis Complete';
-    }
-    if (step === 3) {
-      blackboardLogs.value.push({ time: `00:1${step+1}`, agent: 'Logic Agent', message: 'Conclusion C2 is not supported by data in Chapter 5.', color: 'text-indigo-400' });
-      agents.value[2].active = false;
-      agents.value[2].done = true;
-      agents.value[2].status = 'Analysis Complete';
-    }
-    if (step === 4) {
-      blackboardLogs.value.push({ time: `00:1${step+4}`, agent: 'Literature Agent', message: 'Theoretical framework is solid. No major issues.', color: 'text-emerald-400' });
-      agents.value.forEach(a => {
-        if(a.id !== 'master') {
-          a.active = false; a.done = true; a.status = 'Idle';
-        }
-      });
-      agents.value[0].status = 'Synthesizing final report...';
-      blackboardLogs.value.push({ time: `00:20`, agent: 'Chief Editor', message: 'Gathering findings. Detecting conflicts...', color: 'text-purple-400' });
-    }
-    if (step === 5) {
-      blackboardLogs.value.push({ time: `00:25`, agent: 'Chief Editor', message: 'Logic and Structure issues are correlated. Resolving root cause.', color: 'text-purple-400' });
-    }
-    if (step === 7) {
-      blackboardLogs.value.push({ time: `00:32`, agent: 'System', message: 'Report Generation Complete.', color: 'text-green-400' });
-      taskStatus.value = 'completed';
-      agents.value[0].active = false;
-      agents.value[0].done = true;
-      agents.value[0].status = 'Workflow Completed';
-      clearInterval(timer);
-    }
-  }, 2000);
+function stateLabel(state: string) {
+  if (state === 'running') return 'Running';
+  if (state === 'completed') return 'Done';
+  if (state === 'failed') return 'Failed';
+  return 'Pending';
+}
+
+function conversationStyle(agentName: string) {
+  const colors = palette(agentName);
+  return { borderColor: colors.tone, background: `linear-gradient(180deg, ${colors.tone}, rgba(255,255,255,0.92))` };
+}
+
+async function loadProgress() {
+  try {
+    await store.fetchProjectProgress(projectId);
+  } catch (error) {
+    console.error('Failed to fetch progress snapshot:', error);
+  }
+}
+
+function onChapterToggle(chapterTitle: string, event: Event) {
+  const element = event.currentTarget as HTMLDetailsElement;
+  selectedChapter.value = element.open ? chapterTitle : '';
+}
+
+function openChapter(chapterNo: number) {
+  router.push(`/project/${projectId}/chapter/${chapterNo}`);
+}
+
+function onConflictToggle(index: number, event: Event) {
+  const element = event.currentTarget as HTMLDetailsElement;
+  selectedConflict.value = element.open ? index : null;
+}
+
+function connectStream() {
+  try {
+    const source = createProjectStream(projectId);
+    stream.value = source;
+    source.addEventListener('snapshot', (event) => {
+      streamState.value = 'SSE Live';
+      const payload = JSON.parse((event as MessageEvent).data);
+      store.projectSnapshot = { ...(store.projectSnapshot || {}), snapshot: normalizeProgressSnapshot(payload) };
+    });
+    source.addEventListener('ping', () => { streamState.value = 'SSE Live'; });
+    source.onerror = () => { streamState.value = 'Reconnect'; };
+  } catch (error) {
+    console.error('Unable to start SSE stream:', error);
+    streamState.value = 'Polling';
+  }
+}
+
+onMounted(async () => {
+  await loadProgress();
+  connectStream();
+  poller.value = window.setInterval(loadProgress, 12000);
 });
 
-const viewReport = () => {
-  router.push(`/project/${projectId}/report`);
-};
+onBeforeUnmount(() => {
+  if (poller.value) window.clearInterval(poller.value);
+  stream.value?.close();
+});
 </script>
-
-<style scoped>
-.animate-fade-in-up {
-  animation: fadeInUp 0.4s ease-out forwards;
-}
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-</style>

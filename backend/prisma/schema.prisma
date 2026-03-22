@@ -45,6 +45,62 @@ model CollaborationTask {
   conflicts    AgentConflictRecord[]
   blackboards  BlackboardSnapshot[]
   reports      DiagnosisReport[]
+  activityEvents ActivityEventLog[]
+  activityTraces ActivityConversationTrace[]
+  activitySnapshots TaskActivitySnapshot[]
+}
+
+model ActivityEventLog {
+  id          String            @id @default(uuid())
+  taskId      String
+  task        CollaborationTask @relation(fields: [taskId], references: [id])
+  kind        String
+  phase       String
+  round       Int
+  agentName   String?
+  title       String
+  message     String
+  severity    String?
+  payloadJson String?
+  createdAt   DateTime          @default(now())
+
+  @@index([taskId, createdAt])
+}
+
+model ActivityConversationTrace {
+  id             String            @id @default(uuid())
+  taskId         String
+  task           CollaborationTask @relation(fields: [taskId], references: [id])
+  round          Int
+  agentName      String
+  direction      String
+  title          String
+  detail         String
+  promptSummary  String?
+  rawPayloadJson String?
+  createdAt      DateTime          @default(now())
+
+  @@index([taskId, createdAt])
+}
+
+model TaskActivitySnapshot {
+  id               String            @id @default(uuid())
+  taskId           String
+  task             CollaborationTask @relation(fields: [taskId], references: [id])
+  status           String
+  phase            String
+  currentRound     Int
+  progressPercent  Int
+  startedAt        DateTime?
+  finishedAt       DateTime?
+  agentsJson       String
+  findingsJson     String
+  chiefDecisionJson String?
+  metadataJson     String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@unique([taskId])
 }
 
 model AgentReviewRecord {

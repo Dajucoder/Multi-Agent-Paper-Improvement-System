@@ -1,13 +1,14 @@
 import dotenv from 'dotenv';
 import path from 'path';
 
-// Load environment from the root directory
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+// Load environment from the workspace root directory
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
 export const envConfig = {
   PORT: process.env.PORT || 3000,
   NODE_ENV: process.env.NODE_ENV || 'development',
   DATABASE_URL: process.env.DATABASE_URL || 'file:./dev.db',
+  REVIEW_MAX_CONCURRENCY: Number(process.env.REVIEW_MAX_CONCURRENCY || 1),
   
   // Agent Configs
   Agents: {
