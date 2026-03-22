@@ -6,7 +6,7 @@
         <router-link to="/" class="brand-mark">
           <span class="brand-dot"></span>
           <span>
-            <strong>Paper Improvement System</strong>
+            <strong>{{ t('brandTitle') }}</strong>
             <small>{{ t('brandSubtitle') }}</small>
           </span>
         </router-link>

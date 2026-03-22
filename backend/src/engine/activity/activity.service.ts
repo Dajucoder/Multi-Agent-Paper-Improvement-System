@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { EventEmitter } from 'events';
 import { AgentContribution, AgentName } from '../blackboard/blackboard.types';
+import { activityText } from '../../lib/activity-i18n';
 
 export type AgentState = 'pending' | 'running' | 'completed' | 'failed';
 export type EventKind = 'system' | 'agent' | 'chief';
@@ -127,7 +128,7 @@ export class ActivityService {
       projectId: payload.projectId,
       projectTitle: payload.projectTitle,
       major: payload.major,
-      phase: 'Upload accepted, preparing workflow',
+      phase: activityText('phaseUploadAccepted', {}, 'en'),
       currentRound: 1,
       status: 'active',
       startedAt,
@@ -139,10 +140,10 @@ export class ActivityService {
       chiefDecision: null,
       metadata: {
         parseStages: [
-          { id: 'ingest', label: 'Document ingestion', status: 'completed', detail: 'File accepted and task created.' },
-          { id: 'parse', label: 'Text parsing', status: 'pending', detail: 'Waiting to parse raw document text.' },
-          { id: 'split', label: 'Chapter split', status: 'pending', detail: 'Waiting to segment the thesis into chapters.' },
-          { id: 'dispatch', label: 'Agent dispatch', status: 'pending', detail: 'Waiting to assign specialist agents.' },
+          { id: 'ingest', label: activityText('stageIngest', {}, 'en'), status: 'completed', detail: activityText('stageIngestDetail', {}, 'en') },
+          { id: 'parse', label: activityText('stageParse', {}, 'en'), status: 'pending', detail: activityText('stageParsePending', {}, 'en') },
+          { id: 'split', label: activityText('stageSplit', {}, 'en'), status: 'pending', detail: activityText('stageSplitPending', {}, 'en') },
+          { id: 'dispatch', label: activityText('stageDispatch', {}, 'en'), status: 'pending', detail: activityText('stageDispatchPending', {}, 'en') },
         ],
         chapters: [],
         conflictGraph: [],
@@ -155,8 +156,8 @@ export class ActivityService {
       kind: 'system',
       phase: 'ingestion',
       round: 1,
-      title: 'Task created',
-      message: 'The paper has been accepted and queued for multi-agent review.',
+      title: activityText('eventTaskCreatedTitle', {}, 'en'),
+      message: activityText('eventTaskCreatedMessage', {}, 'en'),
       severity: 'info',
       payload: { projectId: payload.projectId },
     });
@@ -337,7 +338,7 @@ export class ActivityService {
     session.agents[contribution.agent_name] = {
       ...session.agents[contribution.agent_name],
       state: 'completed',
-      status: contribution.overall_judgement || 'Completed analysis',
+      status: contribution.overall_judgement || activityText('statusCompletedAnalysis', {}, 'en'),
       findingsCount: contribution.findings?.length || 0,
       suggestionsCount: contribution.suggestions?.length || 0,
       collaborators: contribution.need_collaboration_with || [],
@@ -353,7 +354,7 @@ export class ActivityService {
     session.agents.chief_editor = {
       ...session.agents.chief_editor,
       state: 'completed',
-      status: 'Unified diagnosis completed',
+      status: activityText('statusUnifiedDiagnosis', {}, 'en'),
       findingsCount: decision?.conflicts_detected?.length || 0,
       suggestionsCount: decision?.revision_plan?.length || 0,
       collaborators: [],
@@ -389,7 +390,7 @@ export class ActivityService {
   async completeTask(taskId: string) {
     const session = await this.requireSession(taskId);
     session.status = 'completed';
-    session.phase = 'Final report ready';
+    session.phase = activityText('phaseFinalReportReady', {}, 'en');
     session.finishedAt = new Date().toISOString();
     await this.persistSnapshot(taskId);
   }
@@ -397,7 +398,7 @@ export class ActivityService {
   async failTask(taskId: string, reason: string) {
     const session = await this.requireSession(taskId);
     session.status = 'failed';
-    session.phase = 'Workflow failed';
+    session.phase = activityText('phaseWorkflowFailed', {}, 'en');
     session.finishedAt = new Date().toISOString();
     await this.persistSnapshot(taskId);
     await this.addEvent(taskId, {
@@ -437,6 +438,14 @@ export class ActivityService {
       findings: Object.values(session.contributions),
       chiefDecision: session.chiefDecision,
       metadata: session.metadata,
+      i18n: {
+        zh: {
+          phase: this.localizePhase(session.phase, 'zh'),
+          agents: Object.values(session.agents).map((agent) => ({ id: agent.id, name: agent.name, status: this.localizeStatus(agent.status, 'zh') })),
+          events: session.events.map((event) => ({ id: event.id, title: this.localizeFreeText(event.title, 'zh'), message: this.localizeFreeText(event.message, 'zh'), phase: this.localizePhase(event.phase, 'zh') })),
+          parseStages: session.metadata.parseStages.map((stage) => ({ id: stage.id, label: this.localizeFreeText(stage.label, 'zh'), detail: this.localizeFreeText(stage.detail, 'zh') })),
+        },
+      },
     };
   }
 
@@ -602,6 +611,43 @@ export class ActivityService {
     return (Object.keys(aliases) as AgentName[])
       .filter((agent) => aliases[agent].some((alias) => haystack.includes(alias)))
       .slice(0, 2);
+  }
+
+  private localizePhase(value: string, locale: 'zh' | 'en') {
+    const phaseMap: Record<string, ReturnType<typeof activityText>> = {
+      [activityText('phaseUploadAccepted', {}, 'en')]: activityText('phaseUploadAccepted', {}, locale),
+      [activityText('phasePreparingSharedContext', {}, 'en')]: activityText('phasePreparingSharedContext', {}, locale),
+      [activityText('phaseRoundReview', {}, 'en')]: activityText('phaseRoundReview', {}, locale),
+      [activityText('phaseChiefSynthesis', {}, 'en')]: activityText('phaseChiefSynthesis', {}, locale),
+      [activityText('phaseFinalReportReady', {}, 'en')]: activityText('phaseFinalReportReady', {}, locale),
+      [activityText('phaseWorkflowFailed', {}, 'en')]: activityText('phaseWorkflowFailed', {}, locale),
+      [activityText('phaseDemoReady', {}, 'en')]: activityText('phaseDemoReady', {}, locale),
+    };
+    return phaseMap[value] || value;
+  }
+
+  private localizeStatus(value: string, locale: 'zh' | 'en') {
+    if (value === activityText('statusCompletedAnalysis', {}, 'en')) return activityText('statusCompletedAnalysis', {}, locale);
+    if (value === activityText('statusUnifiedDiagnosis', {}, 'en')) return activityText('statusUnifiedDiagnosis', {}, locale);
+    return value;
+  }
+
+  private localizeFreeText(value: string, locale: 'zh' | 'en') {
+    const map: Record<string, string> = {
+      [activityText('eventTaskCreatedTitle', {}, 'en')]: activityText('eventTaskCreatedTitle', {}, locale),
+      [activityText('eventTaskCreatedMessage', {}, 'en')]: activityText('eventTaskCreatedMessage', {}, locale),
+      [activityText('eventWorkflowStartedTitle', {}, 'en')]: activityText('eventWorkflowStartedTitle', {}, locale),
+      [activityText('eventWorkflowStartedMessage', {}, 'en')]: activityText('eventWorkflowStartedMessage', {}, locale),
+      [activityText('stageIngest', {}, 'en')]: activityText('stageIngest', {}, locale),
+      [activityText('stageParse', {}, 'en')]: activityText('stageParse', {}, locale),
+      [activityText('stageSplit', {}, 'en')]: activityText('stageSplit', {}, locale),
+      [activityText('stageDispatch', {}, 'en')]: activityText('stageDispatch', {}, locale),
+      [activityText('stageIngestDetail', {}, 'en')]: activityText('stageIngestDetail', {}, locale),
+      [activityText('stageParsePending', {}, 'en')]: activityText('stageParsePending', {}, locale),
+      [activityText('stageSplitPending', {}, 'en')]: activityText('stageSplitPending', {}, locale),
+      [activityText('stageDispatchPending', {}, 'en')]: activityText('stageDispatchPending', {}, locale),
+    };
+    return map[value] || value;
   }
 }
 

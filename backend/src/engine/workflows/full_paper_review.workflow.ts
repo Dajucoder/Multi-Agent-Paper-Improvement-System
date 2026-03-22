@@ -9,6 +9,7 @@ import { activityService } from '../activity/activity.service';
 import { ChapterSplitter } from '../../parser/chapter_splitter';
 import { envConfig } from '../../config/env';
 import { getReviewMaxConcurrency } from '../../modules/system/system.state';
+import { activityText } from '../../lib/activity-i18n';
 
 const prisma = new PrismaClient();
 
@@ -35,14 +36,14 @@ export class FullPaperReviewWorkflow {
    */
   async execute(taskId: string, paperText: string) {
     console.log(`[Workflow] Starting full paper review for task ${taskId}`);
-    await activityService.setPhase(taskId, 'Preparing shared context for all agents');
+    await activityService.setPhase(taskId, activityText('phasePreparingSharedContext', {}, 'en'));
     await activityService.updateParseStage(taskId, 'parse', 'running', 'The system is normalizing raw text extracted from the uploaded document.');
     await activityService.addEvent(taskId, {
       kind: 'system',
       phase: 'preparation',
       round: 1,
-      title: 'Workflow started',
-      message: 'The paper text is being normalized and converted into shared context.',
+      title: activityText('eventWorkflowStartedTitle', {}, 'en'),
+      message: activityText('eventWorkflowStartedMessage', {}, 'en'),
       severity: 'info',
       payload: { textLength: paperText.length },
     });
@@ -73,8 +74,8 @@ export class FullPaperReviewWorkflow {
       kind: 'system',
       phase: 'segmentation',
       round: 1,
-      title: 'Chapter split complete',
-      message: `Segmented the paper into ${chapters.length} chapter blocks for review traceability.`,
+      title: activityText('eventChapterSplitTitle', {}, 'en'),
+      message: activityText('eventChapterSplitMessage', { count: chapters.length }, 'en'),
       severity: 'success',
       payload: {
         chapters: chapters.map((chapter) => ({
@@ -98,8 +99,8 @@ export class FullPaperReviewWorkflow {
       kind: 'system',
       phase: 'preparation',
       round: 1,
-      title: 'Shared blackboard initialized',
-      message: `Task memory created with ${context.length} characters of shared review context.`,
+      title: activityText('eventBlackboardReadyTitle', {}, 'en'),
+      message: activityText('eventBlackboardReadyMessage', { length: context.length }, 'en'),
       severity: 'success',
       payload: { sharedContextLength: context.length },
     });
@@ -109,7 +110,7 @@ export class FullPaperReviewWorkflow {
       console.log(`[Workflow] Round 1: Specialist Review Started...`);
       const round = state.currentRound;
       await activityService.setRound(taskId, round);
-      await activityService.setPhase(taskId, 'Round 1 specialist review in progress (rate-limit friendly mode)');
+      await activityService.setPhase(taskId, activityText('phaseRoundReview', {}, 'en'));
       await activityService.updateParseStage(taskId, 'dispatch', 'running', 'Chief editor is dispatching the segmented paper context to specialist agents.');
       await activityService.setAgentStatus(taskId, 'chief_editor', 'running', 'Dispatching tasks to specialist agents');
       await activityService.addEvent(taskId, {
@@ -117,8 +118,8 @@ export class FullPaperReviewWorkflow {
         phase: 'dispatch',
         round,
         agentName: 'chief_editor',
-        title: 'Round dispatched',
-        message: `Chief editor dispatched structure, logic, literature, and writing reviews using a rate-limit friendly queue (max concurrency: ${getReviewMaxConcurrency()}).`,
+        title: activityText('eventRoundDispatchedTitle', {}, 'en'),
+        message: activityText('eventRoundDispatchedMessage', { maxConcurrency: getReviewMaxConcurrency() }, 'en'),
         severity: 'info',
         payload: { dispatchedAgents: ['structure_agent', 'logic_agent', 'literature_agent', 'writing_agent'], executionMode: 'limited-concurrency', maxConcurrency: getReviewMaxConcurrency() },
       });
@@ -141,8 +142,8 @@ export class FullPaperReviewWorkflow {
           kind: 'system',
           phase: 'rate-limit-control',
           round,
-          title: `Queued ${agent.key}`,
-          message: `${agent.key} 已进入限流友好的执行队列。`,
+          title: activityText('eventQueuedAgentTitle', { agent: agent.key }, 'en'),
+          message: activityText('eventQueuedAgentMessage', { agent: agent.key }, 'en'),
           severity: 'info',
           payload: { agent: agent.key, executionMode: 'limited-concurrency', maxConcurrency: getReviewMaxConcurrency() },
         });
@@ -169,7 +170,7 @@ export class FullPaperReviewWorkflow {
 
       // Synchronize / Resolve Phase
       console.log(`[Workflow] Chief Editor reviewing findings...`);
-      await activityService.setPhase(taskId, 'Chief editor is synthesizing the final diagnosis');
+      await activityService.setPhase(taskId, activityText('phaseChiefSynthesis', {}, 'en'));
       const finalDecision = await chiefEditor.synthesizeAndDecide(taskId);
 
       // Update Task Status
@@ -193,8 +194,8 @@ export class FullPaperReviewWorkflow {
         kind: 'system',
         phase: 'complete',
         round,
-        title: 'Final report stored',
-        message: 'The unified diagnosis has been saved and is ready for the frontend to inspect.',
+        title: activityText('eventFinalReportStoredTitle', {}, 'en'),
+        message: activityText('eventFinalReportStoredMessage', {}, 'en'),
         severity: 'success',
         payload: { reportId: report.id },
       });
@@ -207,9 +208,9 @@ export class FullPaperReviewWorkflow {
 
     } catch (error) {
       console.error(`[Workflow] Error in full paper review task ${taskId}:`, error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown workflow error';
+      const errorMessage = error instanceof Error ? error.message : activityText('errorUnknownWorkflow', {}, 'en');
       const userFriendlyMessage = /449|429|rate limit|too many requests/i.test(errorMessage)
-        ? `上游模型接口当前触发限流：${errorMessage}。系统已采用限流友好模式并自动重试，但仍未成功，请稍后重试。`
+        ? activityText('errorRateLimited', { message: errorMessage }, 'zh')
         : errorMessage;
       await activityService.failTask(taskId, userFriendlyMessage);
       

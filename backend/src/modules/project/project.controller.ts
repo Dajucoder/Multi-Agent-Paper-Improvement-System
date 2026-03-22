@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { activityService } from '../../engine/activity/activity.service';
 import { getReviewMaxConcurrency } from '../system/system.state';
 import JSZip from 'jszip';
+import { ProjectRerunError, restartProjectAnalysis } from './project-rerun.service';
 
 const prisma = new PrismaClient();
 const router = Router();
@@ -41,6 +42,54 @@ router.get('/', async (req, res) => {
   }));
 
   res.json(enrichedProjects);
+});
+
+router.delete('/:projectId', async (req, res) => {
+  const { projectId } = req.params;
+
+  const project = await prisma.paperProject.findUnique({
+    where: { id: projectId },
+    include: { tasks: true },
+  });
+
+  if (!project) {
+    return res.status(404).json({ error: 'Project not found.' });
+  }
+
+  const taskIds = project.tasks.map((task) => task.id);
+
+  await prisma.$transaction(async (tx) => {
+    if (taskIds.length) {
+      await tx.activityEventLog.deleteMany({ where: { taskId: { in: taskIds } } });
+      await tx.activityConversationTrace.deleteMany({ where: { taskId: { in: taskIds } } });
+      await tx.taskActivitySnapshot.deleteMany({ where: { taskId: { in: taskIds } } });
+      await tx.agentReviewRecord.deleteMany({ where: { taskId: { in: taskIds } } });
+      await tx.agentConflictRecord.deleteMany({ where: { taskId: { in: taskIds } } });
+      await tx.blackboardSnapshot.deleteMany({ where: { taskId: { in: taskIds } } });
+      await tx.diagnosisReport.deleteMany({ where: { taskId: { in: taskIds } } });
+      await tx.collaborationTask.deleteMany({ where: { id: { in: taskIds } } });
+    }
+
+    await tx.paperChapter.deleteMany({ where: { projectId } });
+    await tx.paperProject.delete({ where: { id: projectId } });
+  });
+
+  res.json({ success: true, projectId });
+});
+
+router.post('/:projectId/re-run', async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const result = await restartProjectAnalysis(prisma, projectId);
+    return res.json(result);
+  } catch (error: any) {
+    if (error instanceof ProjectRerunError) {
+      return res.status(error.statusCode).json({ error: error.message });
+    }
+
+    console.error('Project Re-run Error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to restart project analysis.' });
+  }
 });
 
 router.get('/:projectId/progress', async (req, res) => {
@@ -333,27 +382,27 @@ router.get('/:projectId/report/export', async (req, res) => {
   const markdown = [
     `# ${project.title}`,
     '',
-    `- 专业：${project.major || '未知'}`,
-    `- 总分：${report?.overallScore ?? 'N/A'}`,
-    `- 评审并发：${getReviewMaxConcurrency()}`,
-    '',
-    '## 根因总结',
-    report?.rootCauseSummary || '暂无根因总结。',
-    '',
-    '## 修订计划',
-    ...(revisionPlan.length ? revisionPlan.map((step: string, index: number) => `${index + 1}. ${step}`) : ['暂无修订计划。']),
-    '',
-    '## 智能体发现',
-    ...findings.flatMap((finding: any) => [
-      `### ${finding.agent_name}`,
-      ...(finding.findings?.length
-        ? finding.findings.map((issue: any) => `- [${issue.severity}] ${issue.issue_type}: ${issue.description} (${issue.location || '未定位'})`)
-        : ['- 无显式问题']),
-      ...(finding.suggestions?.length
-        ? ['建议：', ...finding.suggestions.map((item: string) => `- ${item}`)]
-        : []),
-      '',
-    ]),
+        `- Major: ${project.major || 'Unknown'}`,
+        `- Overall Score: ${report?.overallScore ?? 'N/A'}`,
+        `- Review Concurrency: ${getReviewMaxConcurrency()}`,
+        '',
+        '## Root Cause Summary',
+        report?.rootCauseSummary || 'No root cause summary available.',
+        '',
+        '## Revision Plan',
+        ...(revisionPlan.length ? revisionPlan.map((step: string, index: number) => `${index + 1}. ${step}`) : ['No revision plan available.']),
+        '',
+        '## Agent Findings',
+        ...findings.flatMap((finding: any) => [
+          `### ${finding.agent_name}`,
+          ...(finding.findings?.length
+            ? finding.findings.map((issue: any) => `- [${issue.severity}] ${issue.issue_type}: ${issue.description} (${issue.location || 'Unspecified'})`)
+            : ['- No explicit issue']),
+          ...(finding.suggestions?.length
+            ? ['Suggestions:', ...finding.suggestions.map((item: string) => `- ${item}`)]
+            : []),
+          '',
+        ]),
   ].join('\n');
 
   if (format === 'txt') {

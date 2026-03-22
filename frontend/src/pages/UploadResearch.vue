@@ -3,50 +3,50 @@
     <section class="hero-panel overflow-hidden rounded-[32px] px-6 py-8 sm:px-8 lg:px-10">
       <div class="grid gap-8 lg:grid-cols-[1fr_0.95fr] lg:items-center">
         <div>
-          <p class="hero-kicker">New Review Intake</p>
+          <p class="hero-kicker">{{ t('uploadKicker') }}</p>
           <h1 class="mt-4 text-4xl font-semibold leading-tight text-white sm:text-5xl">{{ t('uploadHeroTitle') }}</h1>
           <p class="hero-copy mt-5 max-w-2xl text-sm leading-7 sm:text-base">
             {{ t('uploadHeroCopy') }}
           </p>
         </div>
         <div class="rounded-[28px] border border-white/15 bg-black/18 p-5 backdrop-blur-sm text-sm text-white/78">
-          <p class="uppercase tracking-[0.24em] text-white/50">Workflow Preview</p>
-          <div class="mt-4 space-y-3">
-            <div class="preview-step">1. 接收论文并创建任务</div>
-            <div class="preview-step">2. Chief Editor 分发并行审查</div>
-            <div class="preview-step">3. 实时展示事件、对话、发现</div>
-            <div class="preview-step">4. 生成 root cause 与修订路线</div>
+            <p class="uppercase tracking-[0.24em] text-white/50">{{ t('workflowPreview') }}</p>
+            <div class="mt-4 space-y-3">
+              <div class="preview-step">{{ t('workflowStep1') }}</div>
+              <div class="preview-step">{{ t('workflowStep2') }}</div>
+              <div class="preview-step">{{ t('workflowStep3') }}</div>
+              <div class="preview-step">{{ t('workflowStep4') }}</div>
+            </div>
           </div>
         </div>
-      </div>
     </section>
 
     <section class="glass-panel p-6 sm:p-8">
       <div class="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
         <form @submit.prevent="submitUpload" class="space-y-6">
           <div>
-            <label class="form-label">论文标题</label>
-            <input v-model="form.title" type="text" placeholder="例如：面向学术写作诊断的多智能体协作系统" class="form-input" />
+            <label class="form-label">{{ t('paperTitle') }}</label>
+            <input v-model="form.title" type="text" :placeholder="t('paperTitlePlaceholder')" class="form-input" />
           </div>
 
           <div>
-            <label class="form-label">专业 / 方向</label>
-            <input v-model="form.major" type="text" placeholder="例如：计算机科学与技术" class="form-input" />
+            <label class="form-label">{{ t('majorDirection') }}</label>
+            <input v-model="form.major" type="text" :placeholder="t('majorPlaceholder')" class="form-input" />
           </div>
 
           <div>
-            <label class="form-label">评审并发数</label>
+            <label class="form-label">{{ t('reviewConcurrency') }}</label>
             <div class="rounded-[20px] border border-[rgba(31,45,61,0.12)] bg-white px-4 py-4">
               <div class="flex items-center gap-3">
                 <input v-model.number="form.reviewMaxConcurrency" type="range" min="1" max="4" step="1" class="w-full" />
                 <span class="tag">{{ form.reviewMaxConcurrency }}</span>
               </div>
-              <p class="mt-3 text-sm text-[var(--ink-muted)]">建议默认使用 `1`，更适合当前限流友好模式；如果模型平台额度充足，可以尝试提高到 `2-4`。</p>
+              <p class="mt-3 text-sm text-[var(--ink-muted)]">{{ t('uploadConcurrencyHint') }}</p>
             </div>
           </div>
 
           <div>
-            <label class="form-label">论文文件</label>
+            <label class="form-label">{{ t('paperFile') }}</label>
             <div
               class="upload-zone"
               :class="file ? 'is-selected' : ''"
@@ -56,8 +56,8 @@
               <div v-if="!file" class="space-y-3 text-center">
                 <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[rgba(21,120,123,0.14)] text-2xl text-[var(--teal)]">+</div>
                 <div>
-                  <p class="text-base font-semibold text-[var(--ink)]">点击选择 PDF 或 DOCX 文件</p>
-                  <p class="mt-1 text-sm text-[var(--ink-muted)]">支持毕业论文、阶段稿、整篇研究文档</p>
+                  <p class="text-base font-semibold text-[var(--ink)]">{{ t('chooseFile') }}</p>
+                  <p class="mt-1 text-sm text-[var(--ink-muted)]">{{ t('fileSupportHint') }}</p>
                 </div>
               </div>
               <div v-else class="space-y-2 text-center">
@@ -68,28 +68,28 @@
           </div>
 
           <button type="submit" :disabled="uploading || !file" class="action-button w-full disabled:cursor-not-allowed disabled:opacity-50">
-            {{ uploading ? '正在创建透明化分析任务...' : '启动透明化协同分析' }}
+            {{ uploading ? t('creatingTransparentTask') : t('startTransparentAnalysis') }}
           </button>
         </form>
 
         <div class="space-y-5">
           <div class="rounded-[26px] bg-[var(--paper)] p-5">
-            <p class="text-xs uppercase tracking-[0.18em] text-[var(--ink-muted)]">用户视角增强</p>
+            <p class="text-xs uppercase tracking-[0.18em] text-[var(--ink-muted)]">{{ t('userValueBoost') }}</p>
             <div class="mt-4 grid gap-3">
-              <div class="feature-card">实时显示总控与各智能体状态</div>
-              <div class="feature-card">展示黑板日志而非纯模拟 loading</div>
-              <div class="feature-card">允许查看 prompt/response 摘要</div>
-              <div class="feature-card">自动跳转到透明进度页继续观察</div>
+              <div class="feature-card">{{ t('uploadBenefit1') }}</div>
+              <div class="feature-card">{{ t('uploadBenefit2') }}</div>
+              <div class="feature-card">{{ t('uploadBenefit3') }}</div>
+              <div class="feature-card">{{ t('uploadBenefit4') }}</div>
             </div>
           </div>
 
           <div class="rounded-[26px] border border-[rgba(31,45,61,0.08)] bg-white p-5">
-            <p class="text-xs uppercase tracking-[0.18em] text-[var(--ink-muted)]">上传后会发生什么</p>
+            <p class="text-xs uppercase tracking-[0.18em] text-[var(--ink-muted)]">{{ t('afterUpload') }}</p>
             <ol class="mt-4 space-y-3 text-sm leading-7 text-[var(--ink-soft)]">
-              <li>1. 后端创建项目和协作任务。</li>
-              <li>2. 前端进入进度页并开始轮询透明快照。</li>
-              <li>3. 用户看到所有关键事件与智能体工作痕迹。</li>
-              <li>4. 完成后可一键进入诊断报告页。</li>
+              <li>{{ t('afterUpload1') }}</li>
+              <li>{{ t('afterUpload2') }}</li>
+              <li>{{ t('afterUpload3') }}</li>
+              <li>{{ t('afterUpload4') }}</li>
             </ol>
           </div>
         </div>
@@ -150,7 +150,7 @@ const submitUpload = async () => {
     router.push(`/project/${res.data.projectId}/progress`);
   } catch (error) {
     console.error('Upload failed:', error);
-    alert('上传失败，请检查后端日志或模型配置。');
+    alert(t('uploadFailed'));
   } finally {
     uploading.value = false;
   }

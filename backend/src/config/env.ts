@@ -1,8 +1,33 @@
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 
 // Load environment from the workspace root directory
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+
+const envFilePath = path.resolve(__dirname, '../../../.env');
+
+type AgentConfig = {
+  API_URL: string;
+  API_KEY: string;
+  MODEL: string;
+};
+
+function persistEnvValue(key: string, value: string) {
+  const serialized = `${key}=${value}`;
+  let content = '';
+  if (fs.existsSync(envFilePath)) {
+    content = fs.readFileSync(envFilePath, 'utf8');
+  }
+
+  const pattern = new RegExp(`^${key}=.*$`, 'm');
+  const nextContent = pattern.test(content)
+    ? content.replace(pattern, serialized)
+    : `${content.trimEnd()}${content.trim() ? '\n' : ''}${serialized}\n`;
+
+  fs.writeFileSync(envFilePath, nextContent, 'utf8');
+  process.env[key] = value;
+}
 
 export const envConfig = {
   PORT: process.env.PORT || 3000,
@@ -39,3 +64,31 @@ export const envConfig = {
     }
   }
 };
+
+export function getAgentConfigs() {
+  return envConfig.Agents;
+}
+
+export function updateAgentConfig(agentName: keyof typeof envConfig.Agents, payload: Partial<AgentConfig>) {
+  const agent = envConfig.Agents[agentName];
+  if (!agent) {
+    throw new Error(`Agent ${agentName} not found.`);
+  }
+
+  const prefix = String(agentName);
+
+  if (typeof payload.API_URL === 'string') {
+    agent.API_URL = payload.API_URL.trim();
+    persistEnvValue(`${prefix}_API_URL`, agent.API_URL);
+  }
+  if (typeof payload.API_KEY === 'string') {
+    agent.API_KEY = payload.API_KEY.trim();
+    persistEnvValue(`${prefix}_API_KEY`, agent.API_KEY);
+  }
+  if (typeof payload.MODEL === 'string') {
+    agent.MODEL = payload.MODEL.trim();
+    persistEnvValue(`${prefix}_MODEL`, agent.MODEL);
+  }
+
+  return agent;
+}

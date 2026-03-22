@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { api, normalizeProgressSnapshot } from '../lib/api';
+import { api, localizeSnapshot, normalizeProgressSnapshot } from '../lib/api';
 
 export const useAppStore = defineStore('app', {
   state: () => ({
@@ -17,10 +17,11 @@ export const useAppStore = defineStore('app', {
       const { data } = await api.get(`/projects/${projectId}/progress`);
       this.currentProjectId = projectId;
       this.currentTaskId = data.task?.id || null;
+      const normalized = normalizeProgressSnapshot(data.snapshot);
       this.projectSnapshot = {
         project: data.project,
         task: data.task,
-        snapshot: normalizeProgressSnapshot(data.snapshot),
+        snapshot: localizeSnapshot(normalized),
       };
       return this.projectSnapshot;
     }
