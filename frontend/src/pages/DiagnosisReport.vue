@@ -4,13 +4,11 @@
       <div v-if="loading" class="empty-state border-white/10 bg-white/5 text-white/75">正在汇总最终诊断报告...</div>
       <div v-else class="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
         <div>
-          <p class="hero-kicker">Unified Diagnosis</p>
+          <p class="hero-kicker">{{ t('diagnosisHeroTitle') }}</p>
           <h1 class="mt-4 text-4xl font-semibold leading-tight text-white sm:text-5xl">
             {{ projectTitle }}
           </h1>
-          <p class="hero-copy mt-5 max-w-2xl text-sm leading-7 sm:text-base">
-            这个报告不再只是给一个笼统结论，而是把总控综合意见、各智能体发现和可执行修订路线连接在一起，形成用户可追溯的最终交付物。
-          </p>
+          <p class="hero-copy mt-5 max-w-2xl text-sm leading-7 sm:text-base">{{ t('diagnosisHeroCopy') }}</p>
         </div>
         <div class="grid gap-4 sm:grid-cols-2">
           <div class="metric-card">
@@ -85,11 +83,11 @@
             </div>
           </div>
           <div class="mt-5 space-y-3">
-            <button class="action-button w-full" @click="router.push(`/project/${projectId}/progress`)">回到透明进度页</button>
-            <button class="action-button w-full" @click="exportReport('markdown')">导出 Markdown 报告</button>
-            <button class="action-button w-full" @click="exportReport('txt')">导出 Word 友好文本</button>
-            <button class="action-button w-full" @click="exportReport('docx')">导出 DOCX 报告</button>
-            <button class="action-button btn-light w-full" @click="router.push('/')">返回项目总览</button>
+            <button class="action-button w-full" @click="router.push(`/project/${projectId}/progress`)">{{ t('backProgress') }}</button>
+            <button class="action-button w-full" @click="exportReport('markdown')">{{ t('exportMarkdown') }}</button>
+            <button class="action-button w-full" @click="exportReport('txt')">{{ t('exportTxt') }}</button>
+            <button class="action-button w-full" @click="exportReport('docx')">{{ t('exportDocx') }}</button>
+            <button class="action-button btn-light w-full" @click="router.push('/')">{{ t('backOverview') }}</button>
           </div>
         </article>
       </div>
@@ -101,6 +99,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { agentPalette, api, formatAgentName, formatIssueTypeLabel, formatJudgementLabel, formatSeverityLabel } from '../lib/api';
+import { t } from '../lib/i18n';
 
 const route = useRoute();
 const router = useRouter();

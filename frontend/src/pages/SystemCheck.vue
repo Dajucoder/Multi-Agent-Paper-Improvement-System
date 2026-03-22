@@ -4,9 +4,9 @@
       <div class="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
         <div>
           <p class="hero-kicker">System Check</p>
-          <h1 class="mt-4 text-4xl font-semibold leading-tight text-white sm:text-5xl">环境与模型配置检查</h1>
+          <h1 class="mt-4 text-4xl font-semibold leading-tight text-white sm:text-5xl">{{ t('systemHeroTitle') }}</h1>
           <p class="hero-copy mt-5 max-w-2xl text-sm leading-7 sm:text-base">
-            这个页面会检查当前后端环境、数据库和各智能体模型配置是否就绪，不暴露完整密钥，但能帮助你快速判断系统能否稳定运行。
+            {{ t('systemHeroCopy') }}
           </p>
         </div>
         <div class="grid gap-4 sm:grid-cols-2">
@@ -55,13 +55,13 @@
           <div v-for="agent in diagnostics.agents" :key="agent.name" class="finding-card">
             <div class="flex items-center justify-between gap-4">
               <h3 class="text-sm font-semibold text-[var(--ink)]">{{ agent.name }}</h3>
-              <span class="status-pill" :data-state="agent.hasApiKey ? 'completed' : 'failed'">{{ agent.hasApiKey ? 'Configured' : 'Missing Key' }}</span>
+               <span class="status-pill" :data-state="agent.hasApiKey ? 'completed' : 'failed'">{{ agent.hasApiKey ? t('configured') : t('missingKey') }}</span>
             </div>
             <div class="mt-3 space-y-2 text-sm leading-6 text-[var(--ink-soft)]">
               <p><strong class="text-[var(--ink)]">API URL:</strong> {{ agent.apiUrl }}</p>
               <p><strong class="text-[var(--ink)]">Model:</strong> {{ agent.model }}</p>
               <p><strong class="text-[var(--ink)]">Key Preview:</strong> {{ agent.apiKeyPreview || 'Not configured' }}</p>
-              <p><strong class="text-[var(--ink)]">连通性测试:</strong> {{ agent.connectivityStatus === 'ok' ? '可访问' : agent.connectivityStatus === 'failed' ? '失败' : '未测试' }} <span class="text-[var(--ink-muted)]">({{ agent.connectivityMessage || '--' }})</span></p>
+               <p><strong class="text-[var(--ink)]">连通性测试:</strong> {{ agent.connectivityStatus === 'ok' ? t('connectivityOk') : agent.connectivityStatus === 'failed' ? t('connectivityFail') : t('connectivityUnknown') }} <span class="text-[var(--ink-muted)]">({{ agent.connectivityMessage || '--' }})</span></p>
             </div>
           </div>
         </div>
@@ -74,6 +74,7 @@
 import { onMounted, ref } from 'vue';
 import { api } from '../lib/api';
 import type { DiagnosticsPayload } from '../lib/api';
+import { t } from '../lib/i18n';
 
 const loading = ref(true);
 const error = ref('');

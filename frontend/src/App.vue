@@ -7,14 +7,20 @@
           <span class="brand-dot"></span>
           <span>
             <strong>Paper Improvement System</strong>
-            <small>Transparent Multi-Agent Review</small>
+            <small>{{ t('brandSubtitle') }}</small>
           </span>
         </router-link>
 
         <div class="nav-links">
-          <router-link to="/" class="nav-link">项目总览</router-link>
-          <router-link to="/help" class="nav-link">帮助文档</router-link>
-          <router-link to="/upload" class="nav-link nav-link--solid">新建分析</router-link>
+          <router-link to="/" class="nav-link">{{ t('navOverview') }}</router-link>
+          <router-link to="/help" class="nav-link">{{ t('navHelp') }}</router-link>
+          <router-link to="/system-check" class="nav-link">{{ t('navSystemCheck') }}</router-link>
+          <router-link to="/upload" class="nav-link nav-link--solid">{{ t('navNewAnalysis') }}</router-link>
+          <div class="locale-switch">
+            <span class="locale-label">{{ t('language') }}</span>
+            <button class="locale-btn" :data-active="locale === 'zh'" @click="setLocale('zh')">{{ t('chinese') }}</button>
+            <button class="locale-btn" :data-active="locale === 'en'" @click="setLocale('en')">{{ t('english') }}</button>
+          </div>
         </div>
       </div>
     </nav>
@@ -26,4 +32,8 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
+import { currentLocale, setLocale, t } from './lib/i18n';
+
+const locale = computed(() => currentLocale.value);
 </script>

@@ -4,11 +4,9 @@
       <div class="grid gap-8 lg:grid-cols-[1fr_0.95fr] lg:items-center">
         <div>
           <p class="hero-kicker">New Review Intake</p>
-          <h1 class="mt-4 text-4xl font-semibold leading-tight text-white sm:text-5xl">
-            上传论文，同时把后续协作过程完整暴露给用户。
-          </h1>
+          <h1 class="mt-4 text-4xl font-semibold leading-tight text-white sm:text-5xl">{{ t('uploadHeroTitle') }}</h1>
           <p class="hero-copy mt-5 max-w-2xl text-sm leading-7 sm:text-base">
-            从上传开始，系统就会在前端展示接收状态、总控调度、各智能体回执和统一诊断过程，而不是只给用户一个单薄的 loading 页面。
+            {{ t('uploadHeroCopy') }}
           </p>
         </div>
         <div class="rounded-[28px] border border-white/15 bg-black/18 p-5 backdrop-blur-sm text-sm text-white/78">
@@ -105,6 +103,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAppStore } from '../store';
 import { api } from '../lib/api';
+import { t } from '../lib/i18n';
 
 const router = useRouter();
 const store = useAppStore();

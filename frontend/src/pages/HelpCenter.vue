@@ -4,9 +4,9 @@
       <div class="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
         <div>
           <p class="hero-kicker">Help Center</p>
-          <h1 class="mt-4 text-4xl font-semibold leading-tight text-white sm:text-5xl">系统说明、FAQ、排错与 API Key 配置指南</h1>
+          <h1 class="mt-4 text-4xl font-semibold leading-tight text-white sm:text-5xl">{{ t('helpHeroTitle') }}</h1>
           <p class="hero-copy mt-5 max-w-2xl text-sm leading-7 sm:text-base">
-            这里不仅解释系统怎么用，还告诉用户为什么要看透明进度页、如何理解冲突图谱、遇到错误时先检查什么，以及如何正确配置模型 API Key。
+            {{ t('helpHeroCopy') }}
           </p>
         </div>
         <div class="grid gap-4 sm:grid-cols-2">
@@ -98,6 +98,7 @@ STRUCTURE_MODEL=gpt-4-turbo</pre>
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import { api } from '../lib/api';
+import { t } from '../lib/i18n';
 
 const router = useRouter();
 

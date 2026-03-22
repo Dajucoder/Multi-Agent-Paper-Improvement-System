@@ -5,17 +5,17 @@
         <div>
           <p class="hero-kicker">Transparent Thesis Co-Pilot</p>
           <h1 class="mt-4 max-w-4xl text-4xl font-semibold leading-tight text-white sm:text-5xl lg:text-6xl">
-            从上传到修订路线，把整条多智能体分析链路对用户完全展开。
+            {{ t('dashboardHeroTitle') }}
           </h1>
           <p class="hero-copy mt-5 max-w-3xl text-sm leading-7 sm:text-base">
-            首页现在同时承担两个角色：第一次进入时，它是产品首页，告诉用户为什么这套系统有价值；已有项目时，它又是工作台，直接进入透明化协作分析。
+            {{ t('dashboardHeroCopy') }}
           </p>
           <div class="mt-6 flex flex-wrap gap-3">
-            <router-link to="/upload" class="action-button">上传论文开始分析</router-link>
-            <router-link to="/help" class="action-button btn-light">查看帮助文档</router-link>
-            <router-link to="/system-check" class="action-button">检查系统配置</router-link>
+            <router-link to="/upload" class="action-button">{{ t('uploadStart') }}</router-link>
+            <router-link to="/help" class="action-button btn-light">{{ t('viewHelp') }}</router-link>
+            <router-link to="/system-check" class="action-button">{{ t('systemCheck') }}</router-link>
             <button class="action-button" :disabled="creatingDemo" @click="launchDemo">
-              {{ creatingDemo ? '正在创建 Demo...' : '一键体验 Demo' }}
+              {{ creatingDemo ? t('creatingDemo') : t('tryDemo') }}
             </button>
           </div>
         </div>
@@ -51,9 +51,9 @@
               <p class="section-kicker">Workspace</p>
               <h2 class="section-title">项目工作台</h2>
             </div>
-            <router-link to="/upload" class="action-button">新建分析任务</router-link>
+             <router-link to="/upload" class="action-button">{{ t('createTask') }}</router-link>
           </div>
-          <div v-if="loading" class="empty-state mt-5">正在读取项目列表...</div>
+          <div v-if="loading" class="empty-state mt-5">{{ t('loadingProjects') }}</div>
           <div v-else class="mt-5 grid gap-4">
             <button
               v-for="project in projects"
@@ -66,7 +66,7 @@
                 <div>
                   <p class="text-xs uppercase tracking-[0.18em] text-[var(--ink-muted)]">{{ project.major || 'Unknown major' }}</p>
                   <h3 class="mt-2 text-xl font-semibold text-[var(--ink)]">{{ project.title }}</h3>
-                  <p class="mt-2 text-sm leading-6 text-[var(--ink-soft)]">{{ project.transparency?.phase || '尚未生成透明化进度快照' }}</p>
+                  <p class="mt-2 text-sm leading-6 text-[var(--ink-soft)]">{{ project.transparency?.phase || t('noSnapshot') }}</p>
                 </div>
                 <span class="status-pill" :data-state="project.latestTask?.status === 'completed' ? 'completed' : project.latestTask?.status === 'failed' ? 'failed' : 'running'">
                   {{ project.latestTask?.status || 'idle' }}
@@ -87,7 +87,7 @@
 
             <router-link to="/upload" class="empty-card">
               <span class="text-3xl">+</span>
-              <span>上传论文并开始新的透明化协同分析</span>
+              <span>{{ t('uploadNewPaper') }}</span>
             </router-link>
           </div>
         </div>
@@ -133,6 +133,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { api } from '../lib/api';
+import { t } from '../lib/i18n';
 
 const router = useRouter();
 const projects = ref<any[]>([]);

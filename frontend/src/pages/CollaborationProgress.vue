@@ -195,7 +195,7 @@
               <p class="mt-2 text-sm leading-6 text-[var(--ink-soft)]">{{ snapshot.chiefDecision.root_cause_summary }}</p>
             </div>
             <ol class="space-y-2 text-sm leading-6 text-[var(--ink-soft)]"><li v-for="(step, index) in chiefPlan" :key="`${index}-${step}`">{{ index + 1 }}. {{ step }}</li></ol>
-            <button v-if="snapshot.status === 'completed'" @click="router.push(`/project/${projectId}/report`)" class="action-button w-full">打开完整诊断报告</button>
+             <button v-if="snapshot.status === 'completed'" @click="router.push(`/project/${projectId}/report`)" class="action-button w-full">{{ t('openReport') }}</button>
           </div>
           <div v-else class="empty-state mt-5">总控尚未完成综合判断，这里会在 SSE 推送后自动更新。</div>
         </div>
@@ -210,6 +210,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { useAppStore } from '../store';
 import { agentPalette, createProjectStream, formatAgentName, formatIssueTypeLabel, formatJudgementLabel, formatSeverityLabel, formatTime, normalizeProgressSnapshot } from '../lib/api';
+import { t } from '../lib/i18n';
 
 const route = useRoute();
 const router = useRouter();

@@ -3,11 +3,9 @@
     <section class="hero-panel overflow-hidden rounded-[32px] px-6 py-8 sm:px-8 lg:px-10">
       <div class="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
         <div>
-          <p class="hero-kicker">Chapter Review</p>
+          <p class="hero-kicker">{{ t('chapterReview') }}</p>
           <h1 class="mt-4 text-4xl font-semibold leading-tight text-white sm:text-5xl">{{ chapterTitle }}</h1>
-          <p class="hero-copy mt-5 max-w-2xl text-sm leading-7 sm:text-base">
-            这里聚焦单章内容，查看这一章被哪些智能体命中、有哪些建议、以及它在冲突图谱中扮演什么角色。
-          </p>
+          <p class="hero-copy mt-5 max-w-2xl text-sm leading-7 sm:text-base">{{ t('chapterHeroCopy') }}</p>
         </div>
         <div class="grid gap-4 sm:grid-cols-2">
           <div class="metric-card"><span class="metric-label">Findings</span><strong class="metric-value">{{ chapterFindingsCount }}</strong></div>
@@ -91,7 +89,7 @@
             </div>
           </div>
           <div class="mt-5 space-y-3">
-            <button class="action-button w-full" @click="router.push(`/project/${projectId}/progress`)">返回透明进度页</button>
+            <button class="action-button w-full" @click="router.push(`/project/${projectId}/progress`)">{{ t('backProgress') }}</button>
             <button class="action-button btn-light w-full" @click="router.push(`/project/${projectId}/report`)">查看最终报告</button>
           </div>
         </article>
@@ -104,6 +102,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { agentPalette, api, formatAgentName, formatIssueTypeLabel, formatSeverityLabel } from '../lib/api';
+import { t } from '../lib/i18n';
 
 const route = useRoute();
 const router = useRouter();

@@ -1,0 +1,121 @@
+import { ref } from 'vue';
+
+export type Locale = 'zh' | 'en';
+
+const savedLocale = (typeof window !== 'undefined' ? window.localStorage.getItem('mapis-locale') : null) as Locale | null;
+export const currentLocale = ref<Locale>(savedLocale === 'en' ? 'en' : 'zh');
+
+export function setLocale(locale: Locale) {
+  currentLocale.value = locale;
+  if (typeof window !== 'undefined') {
+    window.localStorage.setItem('mapis-locale', locale);
+    document.documentElement.lang = locale;
+  }
+}
+
+const messages = {
+  zh: {
+    navOverview: '项目总览',
+    navHelp: '帮助文档',
+    navNewAnalysis: '新建分析',
+    navSystemCheck: '系统检查',
+    brandSubtitle: '透明化多智能体审查',
+    dashboardHeroTitle: '从上传到修订路线，把整条多智能体分析链路对用户完全展开。',
+    dashboardHeroCopy: '首页现在同时承担两个角色：第一次进入时，它是产品首页，告诉用户为什么这套系统有价值；已有项目时，它又是工作台，直接进入透明化协作分析。',
+    uploadStart: '上传论文开始分析',
+    viewHelp: '查看帮助文档',
+    systemCheck: '检查系统配置',
+    tryDemo: '一键体验 Demo',
+    creatingDemo: '正在创建 Demo...',
+    workspaceTitle: '项目工作台',
+    createTask: '新建分析任务',
+    loadingProjects: '正在读取项目列表...',
+    noSnapshot: '尚未生成透明化进度快照',
+    uploadNewPaper: '上传论文并开始新的透明化协同分析',
+    userJourney: '用户上手路径',
+    needHelp: '快速入口',
+    helpHeroTitle: '系统说明、FAQ、排错与 API Key 配置指南',
+    helpHeroCopy: '这里不仅解释系统怎么用，还告诉用户为什么要看透明进度页、如何理解冲突图谱、遇到错误时先检查什么，以及如何正确配置模型 API Key。',
+    uploadHeroTitle: '上传论文，同时把后续协作过程完整暴露给用户。',
+    uploadHeroCopy: '从上传开始，系统就会在前端展示接收状态、总控调度、各智能体回执和统一诊断过程，而不是只给用户一个单薄的 loading 页面。',
+    diagnosisHeroTitle: 'Unified Diagnosis',
+    diagnosisHeroCopy: '这个报告不再只是给一个笼统结论，而是把总控综合意见、各智能体发现和可执行修订路线连接在一起，形成用户可追溯的最终交付物。',
+    chapterHeroCopy: '这里聚焦单章内容，查看这一章被哪些智能体命中、有哪些建议、以及它在冲突图谱中扮演什么角色。',
+    systemHeroTitle: '环境与模型配置检查',
+    systemHeroCopy: '这个页面会检查当前后端环境、数据库和各智能体模型配置是否就绪，不暴露完整密钥，但能帮助你快速判断系统能否稳定运行。',
+    progressHeroCopy: '现在不仅能看见解析、日志和冲突，还能以章节维度查看被哪些智能体命中，以及冲突图谱到底由哪些 issue 连接出来。',
+    openReport: '打开完整诊断报告',
+    backProgress: '回到透明进度页',
+    exportMarkdown: '导出 Markdown 报告',
+    exportTxt: '导出 Word 友好文本',
+    exportDocx: '导出 DOCX 报告',
+    backOverview: '返回项目总览',
+    chapterReview: '章节审查',
+    findings: '发现',
+    conflicts: '冲突',
+    reviewConcurrency: '评审并发数',
+    save: '保存',
+    configured: '已配置',
+    missingKey: '缺少密钥',
+    connectivityOk: '可访问',
+    connectivityFail: '失败',
+    connectivityUnknown: '未测试',
+    language: '语言',
+    chinese: '中文',
+    english: 'English',
+  },
+  en: {
+    navOverview: 'Overview',
+    navHelp: 'Help',
+    navNewAnalysis: 'New Analysis',
+    navSystemCheck: 'System Check',
+    brandSubtitle: 'Transparent Multi-Agent Review',
+    dashboardHeroTitle: 'Expose the entire multi-agent improvement workflow, from upload to revision plan.',
+    dashboardHeroCopy: 'The homepage now serves two roles: for first-time visitors, it explains the product value; for existing users, it acts as a workspace that leads directly into transparent collaborative analysis.',
+    uploadStart: 'Upload Paper',
+    viewHelp: 'View Help',
+    systemCheck: 'Check System',
+    tryDemo: 'Try Demo',
+    creatingDemo: 'Creating Demo...',
+    workspaceTitle: 'Project Workspace',
+    createTask: 'Create Task',
+    loadingProjects: 'Loading projects...',
+    noSnapshot: 'No transparency snapshot available yet',
+    uploadNewPaper: 'Upload a paper and start a new transparent analysis task',
+    userJourney: 'User Journey',
+    needHelp: 'Quick Access',
+    helpHeroTitle: 'Guide, FAQ, Troubleshooting, and API Key Setup',
+    helpHeroCopy: 'This page explains how the system works, why the transparent progress page matters, how to interpret the conflict graph, what to check when errors occur, and how to configure model API keys correctly.',
+    uploadHeroTitle: 'Upload a paper and expose the full collaborative workflow to the user.',
+    uploadHeroCopy: 'From the moment of upload, the frontend shows intake status, chief orchestration, specialist returns, and final synthesis instead of a thin loading screen.',
+    diagnosisHeroTitle: 'Unified Diagnosis',
+    diagnosisHeroCopy: 'This report is more than a generic verdict: it connects the chief editor summary, specialist findings, and actionable revision route into a traceable deliverable.',
+    chapterHeroCopy: 'This page focuses on a single chapter so you can inspect which agents flagged it, what they suggested, and how it appears in the conflict graph.',
+    systemHeroTitle: 'Environment and Model Diagnostics',
+    systemHeroCopy: 'This page checks backend environment, database, and specialist model configuration readiness without exposing full secrets.',
+    progressHeroCopy: 'You can inspect parsing, logs, conflicts, chapter-level findings, and the exact issues that connect the graph.',
+    openReport: 'Open Full Report',
+    backProgress: 'Back to Progress',
+    exportMarkdown: 'Export Markdown',
+    exportTxt: 'Export Word-Friendly Text',
+    exportDocx: 'Export DOCX',
+    backOverview: 'Back to Overview',
+    chapterReview: 'Chapter Review',
+    findings: 'Findings',
+    conflicts: 'Conflicts',
+    reviewConcurrency: 'Review Concurrency',
+    save: 'Save',
+    configured: 'Configured',
+    missingKey: 'Missing Key',
+    connectivityOk: 'Reachable',
+    connectivityFail: 'Failed',
+    connectivityUnknown: 'Untested',
+    language: 'Language',
+    chinese: '中文',
+    english: 'English',
+  },
+};
+
+export function t(key: keyof typeof messages.zh) {
+  return messages[currentLocale.value][key] ?? messages.zh[key];
+}
