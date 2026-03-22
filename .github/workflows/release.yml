@@ -1,0 +1,45 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  publish-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve release metadata
+        id: meta
+        run: |
+          RELEASE_NOTES="docs/releases/${GITHUB_REF_NAME}.md"
+          if [ -f "$RELEASE_NOTES" ]; then
+            echo "has_notes=true" >> "$GITHUB_OUTPUT"
+            echo "notes_path=$RELEASE_NOTES" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_notes=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish GitHub release from curated notes
+        if: steps.meta.outputs.has_notes == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release ${{ github.ref_name }}
+          body_path: ${{ steps.meta.outputs.notes_path }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+
+      - name: Publish GitHub release from generated notes
+        if: steps.meta.outputs.has_notes != 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          generate_release_notes: true

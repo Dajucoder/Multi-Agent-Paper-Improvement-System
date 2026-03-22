@@ -4,6 +4,13 @@
 
 本项目不仅输出最终建议，还会把任务分发、章节切分、智能体回执、冲突关系和总控汇总过程对用户透明展示，适合用于论文深度修改、教学演示和研究验证。
 
+## 当前版本
+
+- 当前项目版本：`v0.2.0`
+- 发布日期：`2026-03-23`
+- 版本基准：以 Git tag 为准，前后端 `package.json` 与 release tag 保持一致
+- Release Notes：存放于 `docs/releases/`，推送 `v*` tag 后可自动触发 GitHub Release 工作流
+
 ## 项目定位
 
 - 面向论文改进，而不是泛化聊天问答
@@ -392,3 +399,11 @@ npx prisma generate
 - Maintainer: Haibo Team
 - Email: 3218541421@qq.com
 - GitHub Issues: `https://github.com/Dajucoder/Multi-Agent-Paper-Improvement-System/issues`
+
+## 发布流程
+
+1. 更新 `CHANGELOG.md`
+2. 同步前后端版本号与目标 tag
+3. 在 `docs/releases/` 新建对应版本的 release notes
+4. 提交 release commit，并创建形如 `v0.2.0` 的 tag
+5. 推送分支与 tag 后，GitHub Actions 会自动创建 Release
