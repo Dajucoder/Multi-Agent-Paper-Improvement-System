@@ -61,6 +61,7 @@
               <p><strong class="text-[var(--ink)]">API URL:</strong> {{ agent.apiUrl }}</p>
               <p><strong class="text-[var(--ink)]">Model:</strong> {{ agent.model }}</p>
               <p><strong class="text-[var(--ink)]">Key Preview:</strong> {{ agent.apiKeyPreview || 'Not configured' }}</p>
+              <p><strong class="text-[var(--ink)]">连通性测试:</strong> {{ agent.connectivityStatus === 'ok' ? '可访问' : agent.connectivityStatus === 'failed' ? '失败' : '未测试' }} <span class="text-[var(--ink-muted)]">({{ agent.connectivityMessage || '--' }})</span></p>
             </div>
           </div>
         </div>

@@ -382,6 +382,38 @@ button:focus-visible {
   box-shadow: 0 14px 30px rgba(31, 45, 61, 0.08);
 }
 
+.feature-card,
+.feature-link,
+.metric-card,
+.project-card,
+.action-button,
+.tag,
+.status-pill {
+  font-weight: 600;
+}
+
+.section-kicker {
+  font-weight: 700;
+}
+
+.section-title {
+  color: var(--ink);
+  text-shadow: none;
+}
+
+.metric-value,
+.metric-label,
+.hero-kicker,
+.hero-copy,
+.feature-card,
+.preview-step,
+.action-button,
+.project-card,
+.empty-state,
+.empty-card {
+  text-rendering: optimizeLegibility;
+}
+
 .feature-link:active,
 .action-button:active,
 .project-card:active {

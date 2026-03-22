@@ -206,6 +206,8 @@ export interface DiagnosticsAgent {
   model: string;
   hasApiKey: boolean;
   apiKeyPreview: string | null;
+  connectivityStatus?: 'ok' | 'failed' | 'unknown';
+  connectivityMessage?: string;
 }
 
 export interface DiagnosticsPayload {
