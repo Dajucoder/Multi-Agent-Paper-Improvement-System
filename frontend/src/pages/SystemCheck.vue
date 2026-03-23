@@ -33,6 +33,11 @@
           <div class="feature-card">{{ t('databaseConfigured') }}: {{ diagnostics.databaseConfigured ? t('yes') : t('no') }}</div>
           <div class="feature-card">{{ t('allAgentsConfigured') }}: {{ diagnostics.checks.allAgentsConfigured ? t('yes') : t('no') }}</div>
           <div class="feature-card">{{ t('reviewConcurrency') }}: {{ diagnostics.reviewMaxConcurrency }}</div>
+          <div class="feature-card">Workflow Engine: {{ diagnostics.workflow?.engine || 'CLASSIC' }}</div>
+          <div v-if="diagnostics.workflow" class="feature-card">RL Max Rounds: {{ diagnostics.workflow.rlMaxRounds }}</div>
+          <div v-if="diagnostics.workflow" class="feature-card">RL Exploration Rate: {{ diagnostics.workflow.rlExplorationRate }}</div>
+          <div v-if="diagnostics.workflow" class="feature-card">RL Learning Rate: {{ diagnostics.workflow.rlLearningRate }}</div>
+          <div v-if="diagnostics.workflow" class="feature-card">RL Reward Threshold: {{ diagnostics.workflow.rlRewardThreshold }}</div>
         </div>
         <div class="mt-5">
           <label class="form-label">{{ t('adjustConcurrency') }}</label>
@@ -119,6 +124,13 @@ const diagnostics = ref<DiagnosticsPayload>({
   environment: 'unknown',
   port: 'unknown',
   databaseConfigured: false,
+  workflow: {
+    engine: 'CLASSIC',
+    rlMaxRounds: 3,
+    rlExplorationRate: 0.2,
+    rlLearningRate: 0.35,
+    rlRewardThreshold: 0.6,
+  },
   reviewMaxConcurrency: 1,
   agents: [],
   checks: {

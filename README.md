@@ -21,6 +21,7 @@
 ## 核心能力
 
 - 多智能体协同审查：结构、逻辑、文献、写作 4 个专家智能体 + 1 个总控编辑
+- 多智能体框架编排：支持 `CLASSIC`（原生编排）与 `LANGGRAPH`（状态图编排）双引擎，可按环境变量切换
 - 透明化工作流：事件流、Prompt Trace、Agent Findings、Chief Decision
 - 章节级洞察：自动切分章节、查看每章命中问题与建议
 - 冲突图谱：展示不同智能体在同一章节或同一问题链上的关联与冲突
@@ -54,6 +55,8 @@
 - Node.js
 - Express
 - TypeScript
+- LangGraph（多智能体状态图编排，可选）
+- 原生 Orchestrator（CLASSIC 兼容模式）
 - Prisma
 - SQLite
 
@@ -131,11 +134,75 @@ WRITING_MODEL=qwen3-max
 
 ```env
 REVIEW_MAX_CONCURRENCY=1
+WORKFLOW_ENGINE=LANGGRAPH
+RL_MAX_ROUNDS=3
+RL_EXPLORATION_RATE=0.2
+RL_LEARNING_RATE=0.35
+RL_REWARD_THRESHOLD=0.6
 ```
 
 说明：
 - 推荐默认 `1`，更适合限流友好模式
 - 如果你的模型平台额度充足，可以尝试调到 `2-4`
+- `WORKFLOW_ENGINE` 可选 `CLASSIC` 或 `LANGGRAPH`
+- 当使用 `LANGGRAPH` 时，系统会启用“带环路 + RL 风格策略更新”的自适应多轮评审
+
+## LangGraph 自适应多智能体关系图
+
+当 `WORKFLOW_ENGINE=LANGGRAPH` 时，系统采用“状态图 + 反馈环”编排：
+
+```mermaid
+flowchart TD
+	A[Upload API<br/>创建任务] --> B[PrepareContext<br/>解析全文/切章/初始化黑板]
+	B --> C[DispatchSpecialists]
+
+	C --> S[Structure Agent]
+	C --> L[Logic Agent]
+	C --> R[Literature Agent]
+	C --> W[Writing Agent]
+
+	S --> D[Blackboard Round Buffer]
+	L --> D
+	R --> D
+	W --> D
+
+	D --> E[Chief Editor Synthesize]
+	E --> F[Policy Update<br/>RL-style Reward/Q Update]
+
+	F -->|reward<threshold 或 requires_another_round=true| G[Advance Round]
+	G --> C
+
+	F -->|reward>=threshold 且无额外轮次| H[Finalize Report]
+	H --> I[(DiagnosisReport)]
+```
+
+### RL 风格策略环（复杂模式）
+
+系统并不做离线训练，而是在单次任务内进行在线策略更新（近似 contextual bandit）：
+
+```mermaid
+flowchart LR
+	C1[Round t Contributions] --> R1[Reward Calculator]
+	D1[Chief Decision<br/>score/conflicts/plan] --> R1
+	R1 --> Q1[Q-value Update]
+	Q1 --> P1[Priority Re-ranking]
+	P1 --> N1[Round t+1 Dispatch]
+	N1 --> C1
+```
+
+奖励信号示意（归一化）：
+
+$$
+r_t = \text{score}_{norm} - \lambda_1\cdot\text{conflicts} - \lambda_2\cdot\text{majorIssues} + \lambda_3\cdot\text{planDensity}
+$$
+
+每个专家优先值更新：
+
+$$
+Q_{a}^{t+1} = Q_{a}^{t} + \alpha\left(r_t - Q_{a}^{t}\right)
+$$
+
+并通过 $\epsilon$-greedy 在每轮做少量探索，避免固定排序导致的审查盲区。
 
 ### 3. 安装依赖
 

@@ -59,6 +59,13 @@ router.get('/diagnostics', async (_req, res) => {
     environment: envConfig.NODE_ENV,
     port: envConfig.PORT,
     databaseConfigured: Boolean(envConfig.DATABASE_URL),
+    workflow: {
+      engine: envConfig.WORKFLOW_ENGINE,
+      rlMaxRounds: envConfig.RL_MAX_ROUNDS,
+      rlExplorationRate: envConfig.RL_EXPLORATION_RATE,
+      rlLearningRate: envConfig.RL_LEARNING_RATE,
+      rlRewardThreshold: envConfig.RL_REWARD_THRESHOLD,
+    },
     reviewMaxConcurrency: getReviewMaxConcurrency(),
     agents: agentEntries,
     checks: {

@@ -2,7 +2,20 @@
 
 ## Unreleased
 
-暂无待发布变更。
+### Multi-Agent Framework
+
+- 新增 `LANGGRAPH` 编排引擎，可与 `CLASSIC` 模式按环境变量切换
+- 新增基于状态图的多轮审查环路（specialists -> chief -> policy -> next round）
+
+### Adaptive Policy (RL-style)
+
+- 新增在线策略更新模块（reward 计算、Q 值更新、epsilon-greedy 排序）
+- 新增策略参数配置：`RL_MAX_ROUNDS`、`RL_EXPLORATION_RATE`、`RL_LEARNING_RATE`、`RL_REWARD_THRESHOLD`
+
+### Docs & Diagnostics
+
+- README 新增 LangGraph 关系图与 RL 策略环图
+- 系统诊断接口新增 `workflow` 字段，返回当前引擎与策略参数
 
 ## 0.2.1 - 2026-03-23
 

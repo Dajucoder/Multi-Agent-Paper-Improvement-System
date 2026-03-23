@@ -34,6 +34,11 @@ export const envConfig = {
   NODE_ENV: process.env.NODE_ENV || 'development',
   DATABASE_URL: process.env.DATABASE_URL || 'file:./dev.db',
   REVIEW_MAX_CONCURRENCY: Number(process.env.REVIEW_MAX_CONCURRENCY || 1),
+  WORKFLOW_ENGINE: (process.env.WORKFLOW_ENGINE || 'CLASSIC').toUpperCase(),
+  RL_MAX_ROUNDS: Number(process.env.RL_MAX_ROUNDS || 3),
+  RL_EXPLORATION_RATE: Number(process.env.RL_EXPLORATION_RATE || 0.2),
+  RL_LEARNING_RATE: Number(process.env.RL_LEARNING_RATE || 0.35),
+  RL_REWARD_THRESHOLD: Number(process.env.RL_REWARD_THRESHOLD || 0.6),
   
   // Agent Configs
   Agents: {

@@ -10,6 +10,7 @@ import { ChapterSplitter } from '../../parser/chapter_splitter';
 import { envConfig } from '../../config/env';
 import { getReviewMaxConcurrency } from '../../modules/system/system.state';
 import { activityText } from '../../lib/activity-i18n';
+import { langGraphFullPaperReviewWorkflow } from './langgraph_full_paper_review.workflow';
 
 const prisma = new PrismaClient();
 
@@ -35,6 +36,10 @@ export class FullPaperReviewWorkflow {
    * Orchestrates the standard full paper review multi-agent workflow
    */
   async execute(taskId: string, paperText: string) {
+    if (envConfig.WORKFLOW_ENGINE === 'LANGGRAPH') {
+      return langGraphFullPaperReviewWorkflow.execute(taskId, paperText);
+    }
+
     console.log(`[Workflow] Starting full paper review for task ${taskId}`);
     await activityService.setPhase(taskId, activityText('phasePreparingSharedContext', {}, 'en'));
     await activityService.updateParseStage(taskId, 'parse', 'running', 'The system is normalizing raw text extracted from the uploaded document.');

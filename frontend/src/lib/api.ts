@@ -302,6 +302,13 @@ export interface DiagnosticsPayload {
   environment: string;
   port: string | number;
   databaseConfigured: boolean;
+  workflow?: {
+    engine: string;
+    rlMaxRounds: number;
+    rlExplorationRate: number;
+    rlLearningRate: number;
+    rlRewardThreshold: number;
+  };
   reviewMaxConcurrency: number;
   agents: DiagnosticsAgent[];
   checks: {
