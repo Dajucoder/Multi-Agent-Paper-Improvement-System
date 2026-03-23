@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+暂无待发布变更。
+
+## 0.2.2 - 2026-03-23
+
 ### Multi-Agent Framework
 
 - 新增 `LANGGRAPH` 编排引擎，可与 `CLASSIC` 模式按环境变量切换

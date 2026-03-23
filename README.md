@@ -6,7 +6,7 @@
 
 ## 当前版本
 
-- 当前项目版本：`v0.2.1`
+- 当前项目版本：`v0.2.2`
 - 发布日期：`2026-03-23`
 - 版本基准：以 Git tag 为准，前后端 `package.json` 与 release tag 保持一致
 - Release Notes：存放于 `docs/releases/`，推送 `v*` tag 后可自动触发 GitHub Release 工作流
